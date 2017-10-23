@@ -1,5 +1,5 @@
 all:
-	g++ *.cpp -o main -std=c++11 -O3
+	g++ *.cpp -o main -Wall -std=c++11 -O3
 clean:
 	rm main
 run:
