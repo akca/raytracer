@@ -34,6 +34,15 @@ class Vector3D {
 			y = j;
 			z = k;
 		}
+		
+		Vector3D operator- (Vector3D v) {
+			return Vector3D(x-v.x, y-v.y, z-v.z);
+		}
+		
+		// Dot product
+		double operator* (Vector3D v) { 
+			return x * v.x + y * v.y + z * v.z;
+		}
 };
 
 #endif

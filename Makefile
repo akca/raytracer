@@ -3,4 +3,4 @@ all:
 clean:
 	rm main
 run:
-	./main hw1_sample_scenes/simple.xml
+	./main hw1_sample_scenes/simple_shading.xml
