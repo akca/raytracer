@@ -62,8 +62,8 @@ int main(int argc, char* argv[])
 							Vector3D sphereCenter (sphereCenterVec3f.x, sphereCenterVec3f.y, sphereCenterVec3f.z);
 							
 							Sphere mySphere (sphereCenter, sphere.radius);
-							
-							if (mySphere.intersects(cameraPosition, direction) > 0) {
+							float t;
+							if (mySphere.intersects(cameraPosition, direction, t)) {
 								
 								image[i++] = 125; // r
 								image[i++] = 155; // g
@@ -76,6 +76,32 @@ int main(int argc, char* argv[])
 						}
 					}
 				}
+			
+			
+			
+			
+			
+			
+			Vector3D cameraPosition (camera.position.x, camera.position.y, camera.position.z);
+							
+			double pixelPositionX = (camera.near_plane.y - camera.near_plane.x) * (256 + 0.5) / 1024;
+			double pixelPositionY = (camera.near_plane.w - camera.near_plane.z) * (192 + 0.5) / 768;
+			Vector3D pixelPosition (pixelPositionX, pixelPositionY, 
+															-camera.near_distance);
+			Vector3D direction = pixelPosition - cameraPosition;
+			
+			std::cout << direction.x << " " << direction.y << " " << direction.z << std::endl;
+			
+
+			
+			
+			
+			
+			
+			
+			
+			
+			
 			
 				write_ppm((camera.image_name).c_str(), image, width, height);
 		}
