@@ -20,9 +20,8 @@ bool quadraticSolve(const float &a, const float &b, const float &c, float &t0, f
 	float delta = b * b - (4 * a * c);
 	//std::cout << delta << std::endl;
 	
-	if (delta < 0) return false; //no soln
-	else if (delta == 0) { // TODO impossible !!! FIXME
-		t0 = t1 = - 0.5 * b / a;
+	if (delta < 0) {
+		return false; //no soln
 	}
 	else {
 		float q = (b > 0) ? 
