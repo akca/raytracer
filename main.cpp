@@ -23,6 +23,7 @@
 #include "parser.h"
 #include "ppm.h"
 #include "vector3d.h"
+#include "object.h"
 #include "sphere.h"
 
 typedef unsigned char RGB[3];
@@ -50,27 +51,47 @@ int main(int argc, char* argv[])
 						for (parser::Sphere sphere : scene.spheres) {
 
 							Vector3D cameraPosition (camera.position.x, camera.position.y, camera.position.z);
+							Vector3D cameraGaze (camera.gaze.x, camera.gaze.y, camera.gaze.z);
+							Vector3D cameraUp (camera.up.x, camera.up.y, camera.up.z);
+							Vector3D cameraRight = cameraGaze.inverse() * cameraUp; // cross product TODO
+							//std::cout << "cameraRight: " << cameraRight.x << " " << cameraRight.y << " " << cameraRight.z << std::endl;					
+							float pixelPositionX = (camera.near_plane.y - camera.near_plane.x) * (x + 0.5) / width; // su
+							float pixelPositionY = (camera.near_plane.w - camera.near_plane.z) * (y + 0.5) / height; // sv
+							//std::cout << "PIXEL: " << pixelPositionX << " " << pixelPositionY << std::endl;							
+							Vector3D centerOfPlane = cameraPosition + cameraGaze * camera.near_distance;
+							//std::cout << "centerOfPlane: " << centerOfPlane.x << " " << centerOfPlane.y << " " << centerOfPlane.z << std::endl;							 									
+							Vector3D planeStartPoint = centerOfPlane + (cameraRight * camera.near_plane.x) + (cameraUp * camera.near_plane.w);
+							//std::cout << "planeStartPoint: " << planeStartPoint.x << " " << planeStartPoint.y << " " << planeStartPoint.z << std::endl;							 									
 							
-							double pixelPositionX = (camera.near_plane.y - camera.near_plane.x) * (x + 0.5) / width;
-							double pixelPositionY = (camera.near_plane.w - camera.near_plane.z) * (y + 0.5) / height;
-							Vector3D pixelPosition (pixelPositionX, pixelPositionY, 
-																			-camera.near_distance);
+							Vector3D pixelPosition = planeStartPoint + (cameraRight * pixelPositionX) - (cameraUp * pixelPositionY); // s(i,j) WRONG!! TODO
+							//std::cout << "pixelPosition: " << pixelPosition.x << " " << pixelPosition.y << " " << planeStartPoint.z << std::endl;
 							Vector3D direction = pixelPosition - cameraPosition;
+							std::cout << "DIR: " << direction.x << " " << direction.y << " " << direction.z << std::endl;							
 							direction.normalize();
-							parser::Vec3f sphereCenterVec3f = scene.vertex_data[sphere.center_vertex_id];
+
+							parser::Vec3f sphereCenterVec3f = scene.vertex_data[sphere.center_vertex_id - 1];
 							
 							Vector3D sphereCenter (sphereCenterVec3f.x, sphereCenterVec3f.y, sphereCenterVec3f.z);
 							
 							Sphere mySphere (sphereCenter, sphere.radius);
-							float t;
+							
+							//std::cout << "SPHERE: " << sphereCenter.x << " " << sphereCenter.y << " " << sphereCenter.z << " " << sphere.radius << std::endl;
+							
+							float t;						
+
 							if (mySphere.intersects(cameraPosition, direction, t)) {
-								
-								image[i++] = 125; // r
-								image[i++] = 155; // g
+							Vector3D intersectionPoint = cameraPosition + direction * t;
+						
+								std::cout << "ASIRI DERECEDE ilginc: " << intersectionPoint.x << " "  
+															<< intersectionPoint.y << " "
+															<< intersectionPoint.z
+															<< std::endl;
+								image[i++] = 255; // r
+								image[i++] = 100; // g
 								image[i++] = 100; // b
 							} else {
 								image[i++] = 0; // r
-								image[i++] = 75; // g
+								image[i++] = 55; // g
 								image[i++] = 0; // b
 							}
 						}

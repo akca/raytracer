@@ -6,21 +6,23 @@
 
 class Vector3D {
 	public:
-		double x;
-		double y;
-		double z;
+		float x;
+		float y;
+		float z;
 
-		double getLength() const {
+		float getLength() const {
 			return sqrt(x*x + y*y + z*z);
 		}
 
-		void normalize() {
+		Vector3D& normalize() {
 
-			double length = getLength();
+			float length = getLength();
 
 			x /= length;
 			y /= length;
 			z /= length;
+			
+			return *this;
 		}
 
 		Vector3D() {
@@ -29,18 +31,35 @@ class Vector3D {
 			z = 0;
 		}
 
-		Vector3D(double i, double j, double k) {
+		Vector3D(float i, float j, float k) {
 			x = i;
 			y = j;
 			z = k;
 		}
 		
-		Vector3D operator- (Vector3D v) {
+		Vector3D inverse() const {
+			return Vector3D(-x , -y, -z);
+		}
+		
+		Vector3D operator- (const Vector3D &v) const {
 			return Vector3D(x-v.x, y-v.y, z-v.z);
 		}
 		
-		// Dot product
-		double operator* (Vector3D v) { 
+		Vector3D operator+ (const Vector3D &v) const {
+			return Vector3D(x+v.x, y+v.y, z+v.z);
+		}
+		
+		// Multiply by constant
+		Vector3D operator* (float cons) const { 
+			return Vector3D(x * cons, y * cons, z * cons);
+		}
+		
+		// Vector cross product TODO
+		Vector3D operator* (const Vector3D &v) const { 
+			return Vector3D(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
+		}
+
+		float dotProduct(const Vector3D &v) const{ 
 			return x * v.x + y * v.y + z * v.z;
 		}
 };
