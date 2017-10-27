@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "sphere.h"
 #include "tinyxml2.h"
 #include <sstream>
 #include <stdexcept>
@@ -168,7 +169,7 @@ void parser::Scene::loadFromXml(const std::string& filepath)
         }
         stream.clear();
 
-        meshes.push_back(mesh);
+        //meshes.push_back(mesh); TODO
         mesh.faces.clear();
         element = element->NextSiblingElement("Mesh");
     }
@@ -188,29 +189,36 @@ void parser::Scene::loadFromXml(const std::string& filepath)
         stream << child->GetText() << std::endl;
         stream >> triangle.indices.v0_id >> triangle.indices.v1_id >> triangle.indices.v2_id;
 
-        triangles.push_back(triangle);
+        //triangles.push_back(triangle); TODO
         element = element->NextSiblingElement("Triangle");
     }
 
     //Get Spheres
     element = root->FirstChildElement("Objects");
     element = element->FirstChildElement("Sphere");
-    Sphere sphere;
     while (element)
     {
+    	int material_id;
+    	int center_vertex_id;
+    	float radius;
+    	
         child = element->FirstChildElement("Material");
         stream << child->GetText() << std::endl;
-        stream >> sphere.material_id;
+        stream >> material_id;
 
         child = element->FirstChildElement("Center");
         stream << child->GetText() << std::endl;
-        stream >> sphere.center_vertex_id;
+        stream >> center_vertex_id;
 
         child = element->FirstChildElement("Radius");
         stream << child->GetText() << std::endl;
-        stream >> sphere.radius;
+        stream >> radius;
 
-        spheres.push_back(sphere);
+		Vec3f sphereCenterVec3f = vertex_data[center_vertex_id - 1];
+		Vector3D sphereCenter (sphereCenterVec3f.x, sphereCenterVec3f.y, sphereCenterVec3f.z);
+        
+        
+        objects.push_back(new Sphere(sphereCenter, radius, material_id)); //TODO DEALLOCATION
         element = element->NextSiblingElement("Sphere");
     }
 }

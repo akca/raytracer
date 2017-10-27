@@ -1,10 +1,8 @@
 #include <iostream>
 #include <string>
+#include <vector>
 #include "parser.h"
 #include "ppm.h"
-#include "vector3d.h"
-#include "object.h"
-#include "sphere.h"
 
 typedef unsigned char RGB[3];
 
@@ -21,13 +19,19 @@ int main(int argc, char* argv[])
 		int height = camera.image_height;
 
 		unsigned char* image = new unsigned char [width * height * 3];
-
+		
+/*		std::vector<Object> objects;
+		
+		for (parser::Sphere &sphere : scene.spheres) {
+		objects.push_back(sphere);
+		}
+*/
 		int i = 0;
 		for (int y = 0; y < height; ++y)
 		{
 			for (int x = 0; x < width; ++x)
 			{
-				for (parser::Sphere sphere : scene.spheres) {
+				for (auto &object : scene.objects) {
 
 					Vector3D cameraPosition (camera.position.x, camera.position.y, camera.position.z);
 					Vector3D cameraGaze (camera.gaze.x, camera.gaze.y, camera.gaze.z);
@@ -48,17 +52,12 @@ int main(int argc, char* argv[])
 					//std::cout << "DIR: " << direction.x << " " << direction.y << " " << direction.z << std::endl;							
 					direction.normalize();
 
-					parser::Vec3f sphereCenterVec3f = scene.vertex_data[sphere.center_vertex_id - 1];
-
-					Vector3D sphereCenter (sphereCenterVec3f.x, sphereCenterVec3f.y, sphereCenterVec3f.z);
-
-					Sphere mySphere (sphereCenter, sphere.radius);
 
 					//std::cout << "SPHERE: " << sphereCenter.x << " " << sphereCenter.y << " " << sphereCenter.z << " " << sphere.radius << std::endl;
 
 					float t;						
 
-					if (mySphere.intersects(cameraPosition, direction, t)) {
+					if (object->intersects(cameraPosition, direction, t)) {
 						Vector3D intersectionPoint = cameraPosition + direction * t;
 
 						//								std::cout << "ASIRI DERECEDE ilginc: " << intersectionPoint.x << " "  

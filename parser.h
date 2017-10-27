@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "object.h"
 
 namespace parser
 {
@@ -67,13 +68,13 @@ namespace parser
 		int material_id;
 		Face indices;
 	};
-
+/*
 	struct Sphere
 	{
 		int material_id;
 		int center_vertex_id;
 		float radius;
-	};
+	};*/
 
 	struct Scene
 	{
@@ -86,9 +87,8 @@ namespace parser
 		std::vector<PointLight> point_lights;
 		std::vector<Material> materials;
 		std::vector<Vec3f> vertex_data;
-		std::vector<Mesh> meshes;
-		std::vector<Triangle> triangles;
-		std::vector<Sphere> spheres;
+		std::vector<Object*> objects;
+
 
 		//Functions
 		void loadFromXml(const std::string& filepath);

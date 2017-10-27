@@ -3,6 +3,7 @@
 
 #include "vector3d.h"
 #include "ray.h"
+#include "parser.h"
 #include "object.h"
 
 class Sphere : public Object {
@@ -10,11 +11,14 @@ class Sphere : public Object {
 		Vector3D center; // center of the sphere
 		float r;
 		float r2;
-
-		Sphere (Vector3D& c, float radius) {
+		int material_id;
+		
+		Sphere (Vector3D &c, float radius, int material) {
+		
 			center = c;
 			r = radius;
 			r2 = r * r;
+			material_id = material;
 		}
 
 		bool intersects(const Vector3D &origin, const Vector3D &direction, float &t) const {
