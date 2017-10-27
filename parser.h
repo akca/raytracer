@@ -9,10 +9,6 @@ namespace parser
 {
 	//Notice that all the structures are as simple as possible
 	//so that you are not enforced to adopt any style or design.
-	struct Vec3f
-	{
-		float x, y, z;
-	};
 
 	struct Vec3i
 	{
@@ -62,13 +58,13 @@ namespace parser
 		int material_id;
 		std::vector<Face> faces;
 	};
-
+/*
 	struct Triangle
 	{
 		int material_id;
 		Face indices;
 	};
-/*
+
 	struct Sphere
 	{
 		int material_id;

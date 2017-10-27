@@ -3,7 +3,6 @@
 
 #include "vector3d.h"
 #include "ray.h"
-#include "parser.h"
 #include "object.h"
 
 class Sphere : public Object {

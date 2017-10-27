@@ -1,13 +1,13 @@
-#ifndef SPHERE_H__
-#define SPHERE_H__
+#ifndef TRIANGLE_H__
+#define TRIANGLE_H__
 
 #include "vector3d.h"
 #include "ray.h"
 #include "object.h"
+#include "parser.h"
 
 class Triangle : public Object {
 	public:
-		using parser::Vec3f;
 		
 		Vec3f v1;
 		Vec3f v2;
@@ -52,6 +52,11 @@ class Triangle : public Object {
 			else {
 				return false;
 			}
+		}
+		
+		void getSurfaceData(const Vector3D &Phit, Vector3D &Nhit) const
+		{
+
 		}
 
 };
