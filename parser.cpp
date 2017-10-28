@@ -1,5 +1,7 @@
 #include "parser.h"
+#include "face.h"
 #include "sphere.h"
+#include "mesh.h"
 #include "triangle.h"
 #include "tinyxml2.h"
 #include <sstream>
@@ -153,25 +155,36 @@ void parser::Scene::loadFromXml(const std::string& filepath)
     //Get Meshes
     element = root->FirstChildElement("Objects");
     element = element->FirstChildElement("Mesh");
-    Mesh mesh;
+  
     while (element)
     {
+	    std::vector<Face> faces;
+        int material_id;
+        
         child = element->FirstChildElement("Material");
         stream << child->GetText() << std::endl;
-        stream >> mesh.material_id;
+        stream >> material_id;
 
         child = element->FirstChildElement("Faces");
         stream << child->GetText() << std::endl;
-        Face face;
-        while (!(stream >> face.v0_id).eof())
+
+        int v0_id, v1_id, v2_id;
+        
+        while (!(stream >> v0_id).eof())
         {
-            stream >> face.v1_id >> face.v2_id;
-            mesh.faces.push_back(face);
+            stream >> v1_id >> v2_id;
+			Vector3D vertex1 (vertex_data[v0_id - 1].x, vertex_data[v0_id - 1].y, vertex_data[v0_id - 1].z);
+			Vector3D vertex2 (vertex_data[v1_id - 1].x, vertex_data[v1_id - 1].y, vertex_data[v1_id - 1].z);
+			Vector3D vertex3 (vertex_data[v2_id - 1].x, vertex_data[v2_id - 1].y, vertex_data[v2_id - 1].z);
+
+			Face face(vertex1, vertex2, vertex3);
+			
+            faces.push_back(face);
         }
         stream.clear();
 
-        //meshes.push_back(mesh); TODO
-        mesh.faces.clear();
+        objects.push_back(new Mesh(faces, material_id - 1)); //TODO DEALLOCATION
+        //mesh.faces.clear();
         element = element->NextSiblingElement("Mesh");
     }
     stream.clear();
@@ -184,7 +197,7 @@ void parser::Scene::loadFromXml(const std::string& filepath)
     {
         int material_id;
         int v0_id, v1_id, v2_id;
-        
+
         child = element->FirstChildElement("Material");
         stream << child->GetText() << std::endl;
         stream >> material_id;
@@ -192,13 +205,15 @@ void parser::Scene::loadFromXml(const std::string& filepath)
         child = element->FirstChildElement("Indices");
         stream << child->GetText() << std::endl;
         stream >> v0_id >> v1_id >> v2_id;
-        
-		Vec3f vertex1 = vertex_data[v0_id - 1];
-		Vec3f vertex2 = vertex_data[v1_id - 1];
-		Vec3f vertex3 = vertex_data[v2_id - 1];
+
+		Vector3D vertex1 (vertex_data[v0_id - 1].x, vertex_data[v0_id - 1].y, vertex_data[v0_id - 1].z);
+		Vector3D vertex2 (vertex_data[v1_id - 1].x, vertex_data[v1_id - 1].y, vertex_data[v1_id - 1].z);
+		Vector3D vertex3 (vertex_data[v2_id - 1].x, vertex_data[v2_id - 1].y, vertex_data[v2_id - 1].z);
 		
-        objects.push_back(new Triangle(vertex1, vertex2, vertex3)); //TODO DEALLOCATION
-        
+		Face face(vertex1, vertex2, vertex3);
+		
+        objects.push_back(new Triangle(face, material_id - 1)); //TODO DEALLOCATION
+
         element = element->NextSiblingElement("Triangle");
     }
 
@@ -210,7 +225,7 @@ void parser::Scene::loadFromXml(const std::string& filepath)
     	int material_id;
     	int center_vertex_id;
     	float radius;
-    	
+
         child = element->FirstChildElement("Material");
         stream << child->GetText() << std::endl;
         stream >> material_id;
@@ -225,7 +240,7 @@ void parser::Scene::loadFromXml(const std::string& filepath)
 
 		Vec3f sphereCenterVec3f = vertex_data[center_vertex_id - 1];
 		Vector3D sphereCenter (sphereCenterVec3f.x, sphereCenterVec3f.y, sphereCenterVec3f.z);
-                
+
         objects.push_back(new Sphere(sphereCenter, radius, material_id)); //TODO DEALLOCATION
         element = element->NextSiblingElement("Sphere");
     }

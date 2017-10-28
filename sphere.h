@@ -2,7 +2,6 @@
 #define SPHERE_H__
 
 #include "vector3d.h"
-#include "ray.h"
 #include "object.h"
 
 class Sphere : public Object {

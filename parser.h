@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "object.h"
+#include "face.h"
 
 namespace parser
 {
@@ -45,20 +46,21 @@ namespace parser
 		Vec3f mirror;
 		float phong_exponent;
 	};
-
+/*
 	struct Face
 	{
 		int v0_id;
 		int v1_id;
 		int v2_id;
 	};
-
+*/
+/*
 	struct Mesh
 	{
 		int material_id;
 		std::vector<Face> faces;
 	};
-/*
+
 	struct Triangle
 	{
 		int material_id;

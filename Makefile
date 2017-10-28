@@ -12,3 +12,7 @@ cornellbox:
 	./main hw1_sample_scenes/cornellbox.xml
 mirror_spheres:
 	./main hw1_sample_scenes/mirror_spheres.xml
+bunny:
+	./main hw1_sample_scenes/bunny.xml
+dragon_lowres:
+	./main hw1_sample_scenes/dragon_lowres.xml
