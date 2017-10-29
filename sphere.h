@@ -9,17 +9,16 @@ class Sphere : public Object {
 		Vector3D center; // center of the sphere
 		float r;
 		float r2;
-		int material_id;
-		
+
 		Sphere (Vector3D &c, float radius, int material) {
-		
+
 			center = c;
 			r = radius;
 			r2 = r * r;
 			material_id = material;
 		}
 
-		bool intersects(const Vector3D &origin, const Vector3D &direction, float &t) const {
+		bool intersects(const Vector3D &origin, const Vector3D &direction, float &t) {
 
 			Vector3D L = origin - center;
 
@@ -46,7 +45,7 @@ class Sphere : public Object {
 			return true;
 		}
 
-		Vector3D& getNormalAt(const Vector3D &hitPoint) const
+		Vector3D& getNormalAt(const Vector3D &hitPoint)
 		{
 			Vector3D *normal = new Vector3D(hitPoint - center);
 			return normal->normalize();
@@ -54,4 +53,3 @@ class Sphere : public Object {
 };
 
 #endif
-

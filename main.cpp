@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
         // direction.z << std::endl;
         direction.normalize();
 
-        Object *nearObject = NULL;
+        Object *intersectObject = NULL;
         float tmin = FLOAT_MAX;
 
         for (auto &object : scene.objects) {
@@ -75,32 +75,36 @@ int main(int argc, char *argv[]) {
 
           if (object->intersects(cameraPosition, direction, t) && t < tmin) {
             tmin = t;
-            nearObject = object;
+            intersectObject = object;
           }
         }
 
+        // if intersection with an object found
         if (tmin < FLOAT_MAX) {
-          Vector3D intersectionPoint = cameraPosition + direction * tmin;
+          Vector3D intersectPoint = cameraPosition + direction * tmin;
 
-          Vector3D &normal = nearObject->getNormalAt(intersectionPoint);
+          Vector3D &normal = intersectObject->getNormalAt(intersectPoint);
 
-          Vector3D &kDiffuse = scene.materials[nearObject->material_id].diffuse;
-          Vector3D &kAmbient = scene.materials[nearObject->material_id].ambient;
+          Vector3D &kDiffuse =
+              scene.materials[intersectObject->material_id].diffuse;
+          Vector3D &kAmbient =
+              scene.materials[intersectObject->material_id].ambient;
           Vector3D &kSpecular =
-              scene.materials[nearObject->material_id].specular;
-          Vector3D &kMirror = scene.materials[nearObject->material_id].mirror;
+              scene.materials[intersectObject->material_id].specular;
+          Vector3D &kMirror =
+              scene.materials[intersectObject->material_id].mirror;
 
-          Vector3D lightDiffuse;
+          Vector3D pixelColor;
 
           // ambient light
-          lightDiffuse = lightDiffuse + kAmbient.multiply(scene.ambient_light);
+          pixelColor = kAmbient.multiply(scene.ambient_light);
 
           for (parser::PointLight &light : scene.point_lights) {
 
-            Vector3D wi = (light.position - intersectionPoint);
+            Vector3D wi = (light.position - intersectPoint).normalize();
 
             Vector3D shadowRayOrigin =
-                intersectionPoint + wi.normalize() * scene.shadow_ray_epsilon;
+                intersectPoint + wi * scene.shadow_ray_epsilon;
 
             float stmin = FLOAT_MAX;
 
@@ -109,26 +113,29 @@ int main(int argc, char *argv[]) {
             for (auto &sobject : scene.objects) {
               float st = FLOAT_MAX;
 
-              if (sobject->intersects(shadowRayOrigin, wi.normalize(), st) &&
-                  st < stmin) {
+              if (sobject->intersects(shadowRayOrigin, wi, st) && st < stmin) {
                 stmin = st;
               }
             }
 
-            if (intersectionPoint.distance(light.position) > stmin) {
+            if (shadowRayOrigin.distance(light.position) < stmin) {
 
-              float costheta =
-                  std::max(float(0), wi.normalize().dotProduct(normal));
-
+              float costheta = std::max(float(0), wi.dotProduct(normal));
+              // std::cout << costheta << std::endl;
               // diffuse shading
-              // lightDiffuse = lightDiffuse + (kDiffuse *
-              // costheta).multiply(light.intensity / (wi).dotProduct(wi));
+              float distance2 =
+                  pow((intersectPoint).distance(light.position), 2);
+              pixelColor =
+                  pixelColor +
+                  (kDiffuse * costheta).multiply(light.intensity / distance2);
             }
           }
 
-          image[i++] = lightDiffuse.x; // r
-          image[i++] = lightDiffuse.y; // g
-          image[i++] = lightDiffuse.z; // b
+          // TODO FIX ROUNDING
+
+          image[i++] = std::min((int)pixelColor.x, 255); // r
+          image[i++] = std::min((int)pixelColor.y, 255); // g
+          image[i++] = std::min((int)pixelColor.z, 255); // b
         } else {
           image[i++] = scene.background_color.x; // r
           image[i++] = scene.background_color.y; // g
