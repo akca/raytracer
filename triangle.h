@@ -19,7 +19,7 @@ class Triangle : public Object {
 			return face.intersects(origin, direction, t);
 		}
 		
-		void getSurfaceData(const Vector3D &Phit, Vector3D &Nhit) const
+		Vector3D& getNormalAt(const Vector3D &hitPoint) const
 		{
 
 		}

@@ -46,10 +46,10 @@ class Sphere : public Object {
 			return true;
 		}
 
-		void getSurfaceData(const Vector3D &Phit, Vector3D &Nhit) const
+		Vector3D& getNormalAt(const Vector3D &hitPoint) const
 		{
-			Nhit = Phit - center;
-			Nhit.normalize();
+			Vector3D *normal = new Vector3D(hitPoint - center);
+			return normal->normalize();
 		}
 };
 

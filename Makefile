@@ -4,15 +4,22 @@ clean:
 	rm main
 simple:
 	./main hw1_sample_scenes/simple.xml
+	eog simple.ppm &
 simple_shading:
 	./main hw1_sample_scenes/simple_shading.xml
+	eog simple_shading.ppm &
 simple_reflectance:
 	./main hw1_sample_scenes/simple_reflectance.xml
+	eog simple_reflectance.ppm &
 cornellbox:
 	./main hw1_sample_scenes/cornellbox.xml
+	eog cornellbox.ppm &
 mirror_spheres:
 	./main hw1_sample_scenes/mirror_spheres.xml
+	eog mirror_spheres.ppm &
 bunny:
 	./main hw1_sample_scenes/bunny.xml
+	eog bunny.ppm &
 dragon_lowres:
 	./main hw1_sample_scenes/dragon_lowres.xml
+	eog dragon_lowres.ppm &
