@@ -21,10 +21,11 @@ public:
   bool intersects(const Vector3D &origin, const Vector3D &direction, float &t) {
 
     float tmin = FLOAT_MAX;
+    float t2 = FLOAT_MAX;
 
     for (auto &f : faces) {
-      if (f.intersects(origin, direction, t) && t < tmin) {
-        tmin = t;
+      if (f.intersects(origin, direction, t2) && t2 < tmin) {
+        tmin = t2;
         lastIntersectNormal = &(f.normal);
       }
     }

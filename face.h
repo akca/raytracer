@@ -25,17 +25,18 @@ public:
     /*		std::cout << v3.x <<v3.y<<v3.z<<std::endl;*/
 
     // ignore back-facing triangles
-    if (normal.dotProduct(direction) > 0) {
+    if (normal.dotProduct(direction) > -0.001) {
       return false;
     }
 
     float detA =
         det33(v1.x - v2.x, v1.x - v3.x, direction.x, v1.y - v2.y, v1.y - v3.y,
               direction.y, v1.z - v2.z, v1.z - v3.z, direction.z);
-
-    if (std::abs(detA) < 0.00001) { // TODO test this value!
-      return false;
-    }
+    /*
+        if (std::abs(detA) < 0.0000001) { // TODO test this value!
+          return false;
+        }
+    */
     // std::cout << detA << std::endl;
 
     float beta = det33(v1.x - origin.x, v1.x - v3.x, direction.x,
@@ -55,7 +56,7 @@ public:
 
     // TODO FIXME Tmin Tmax should be checked!
 
-    if (beta + gama <= 1.00001 && 0 <= beta + 0.00001 && 0 <= gama + 0.00001) {
+    if (t > 0.00001 &&beta + gama <= 1.00001 && 0 <= beta + 0.00001 && 0 <= gama + 0.00001) {
       return true;
     } else {
       return false;

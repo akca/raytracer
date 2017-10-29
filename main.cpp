@@ -115,19 +115,34 @@ int main(int argc, char *argv[]) {
 
               if (sobject->intersects(shadowRayOrigin, wi, st) && st < stmin) {
                 stmin = st;
+                // TODO: OPTIMIZE: NO NEED TO FIND CLOSER ONE!
               }
             }
+            // FIXME TODO
+            if (shadowRayOrigin.distance(light.position) < stmin + 0.0001) {
+              // std::cout << shadowRayOrigin.distance(light.position) << " "
+              //           << stmin << std::endl;
 
-            if (shadowRayOrigin.distance(light.position) < stmin) {
+              Vector3D halfVector = (wi + direction.inverse()).normalize(); // specular
 
-              float costheta = std::max(float(0), wi.dotProduct(normal));
+              float costheta_diff = std::max(float(0), wi.dotProduct(normal));
+              float costheta_spec =
+                  std::max(float(0), normal.dotProduct(halfVector));
               // std::cout << costheta << std::endl;
-              // diffuse shading
+
               float distance2 =
                   pow((intersectPoint).distance(light.position), 2);
+              // diffuse shading
+              pixelColor =
+                  pixelColor + (kDiffuse * costheta_diff)
+                                   .multiply(light.intensity / distance2);
+              // specular shading
               pixelColor =
                   pixelColor +
-                  (kDiffuse * costheta).multiply(light.intensity / distance2);
+                  (kSpecular * pow(costheta_spec,
+                                   scene.materials[intersectObject->material_id]
+                                       .phong_exponent))
+                      .multiply(light.intensity / distance2);
             }
           }
 

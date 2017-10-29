@@ -13,7 +13,6 @@ simple_reflectance:
 	eog simple_reflectance.ppm &
 cornellbox:
 	./main hw1_sample_scenes/cornellbox.xml
-	eog cornellbox.ppm &
 mirror_spheres:
 	./main hw1_sample_scenes/mirror_spheres.xml
 	eog mirror_spheres.ppm &
