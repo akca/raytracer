@@ -22,3 +22,6 @@ bunny:
 dragon_lowres:
 	./main hw1_sample_scenes/dragon_lowres.xml
 	eog dragon_lowres.ppm &
+horse_and_mug:
+		./main hw1_sample_scenes/horse_and_mug.xml
+		eog horse_and_mug.ppm &

@@ -9,6 +9,109 @@ const float FLOAT_MAX = std::numeric_limits<float>::max();
 
 typedef unsigned char RGB[3];
 
+Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
+               Vector3D &direction, int recursionDepth) {
+
+  Object *intersectObject = NULL;
+  float tmin = FLOAT_MAX;
+
+  for (auto &object : scene.objects) {
+
+    float t = FLOAT_MAX;
+    if (object->intersects(cameraPosition, direction, t) && t < tmin) {
+      tmin = t;
+      intersectObject = object;
+    }
+  }
+  Vector3D pixelColor;
+
+  // if intersection with an object found
+  if (tmin < FLOAT_MAX) {
+    Vector3D intersectPoint = cameraPosition + direction * tmin;
+
+    Vector3D &normal = intersectObject->getNormalAt(intersectPoint);
+
+    Vector3D &kDiffuse = scene.materials[intersectObject->material_id].diffuse;
+    Vector3D &kAmbient = scene.materials[intersectObject->material_id].ambient;
+    Vector3D &kSpecular =
+        scene.materials[intersectObject->material_id].specular;
+    Vector3D &kMirror = scene.materials[intersectObject->material_id].mirror;
+
+    // ambient light
+    pixelColor = kAmbient.multiply(scene.ambient_light);
+
+    for (parser::PointLight &light : scene.point_lights) {
+
+      Vector3D wi = (light.position - intersectPoint).normalize();
+
+      Vector3D shadowRayOrigin = intersectPoint + wi * scene.shadow_ray_epsilon;
+
+      float stmin = FLOAT_MAX;
+
+      // TODO OPTIMIZE NORMALIZATION
+
+      for (auto &sobject : scene.objects) {
+        float st = FLOAT_MAX;
+
+        if (sobject->intersects(shadowRayOrigin, wi, st) && st < stmin) {
+          stmin = st;
+          // TODO: OPTIMIZE: NO NEED TO FIND CLOSER ONE!
+        }
+      }
+      // FIXME TODO
+      if (shadowRayOrigin.distance(light.position) < stmin + 0.0001) {
+        // std::cout << shadowRayOrigin.distance(light.position) << " "
+        //           << stmin << std::endl;
+
+        Vector3D halfVector =
+            (wi + direction.inverse()).normalize(); // for specular
+
+        float costheta_diff = std::max(float(0), wi.dotProduct(normal));
+        float distance2 = pow((intersectPoint).distance(light.position), 2);
+
+        // diffuse shading
+        pixelColor =
+            pixelColor +
+            (kDiffuse * costheta_diff).multiply(light.intensity / distance2);
+
+        float costheta_spec = std::max(float(0), normal.dotProduct(halfVector));
+
+        // specular shading
+        pixelColor =
+            pixelColor +
+            (kSpecular *
+             pow(costheta_spec,
+                 scene.materials[intersectObject->material_id].phong_exponent))
+                .multiply(light.intensity / distance2);
+
+        Vector3D wr = (direction +
+                       (normal * 2) * (normal.dotProduct(direction.inverse())))
+                          .normalize(); // for reflectance
+
+        // reflection
+        if ((kMirror.x > 0.001 || kMirror.y > 0.001 || kMirror.z > 0.001) &&
+            recursionDepth < scene.max_recursion_depth) {
+
+          pixelColor =
+              pixelColor + kMirror.multiply(shade(scene, intersectPoint, wr,
+                                                  recursionDepth + 1));
+        }
+      }
+    }
+
+    // TODO FIX ROUNDING ###############################
+
+    pixelColor.x = std::min((int)pixelColor.x, 255); // r
+    pixelColor.y = std::min((int)pixelColor.y, 255); // g
+    pixelColor.z = std::min((int)pixelColor.z, 255); // b
+  } else {
+    pixelColor.x = scene.background_color.x; // r
+    pixelColor.y = scene.background_color.y; // g
+    pixelColor.z = scene.background_color.z; // b
+  }
+  return pixelColor;
+}
+
 int main(int argc, char *argv[]) {
   parser::Scene scene;
 
@@ -66,96 +169,11 @@ int main(int argc, char *argv[]) {
         // direction.z << std::endl;
         direction.normalize();
 
-        Object *intersectObject = NULL;
-        float tmin = FLOAT_MAX;
+        Vector3D pixelColor = shade(scene, cameraPosition, direction, 0);
 
-        for (auto &object : scene.objects) {
-
-          float t = FLOAT_MAX;
-
-          if (object->intersects(cameraPosition, direction, t) && t < tmin) {
-            tmin = t;
-            intersectObject = object;
-          }
-        }
-
-        // if intersection with an object found
-        if (tmin < FLOAT_MAX) {
-          Vector3D intersectPoint = cameraPosition + direction * tmin;
-
-          Vector3D &normal = intersectObject->getNormalAt(intersectPoint);
-
-          Vector3D &kDiffuse =
-              scene.materials[intersectObject->material_id].diffuse;
-          Vector3D &kAmbient =
-              scene.materials[intersectObject->material_id].ambient;
-          Vector3D &kSpecular =
-              scene.materials[intersectObject->material_id].specular;
-          Vector3D &kMirror =
-              scene.materials[intersectObject->material_id].mirror;
-
-          Vector3D pixelColor;
-
-          // ambient light
-          pixelColor = kAmbient.multiply(scene.ambient_light);
-
-          for (parser::PointLight &light : scene.point_lights) {
-
-            Vector3D wi = (light.position - intersectPoint).normalize();
-
-            Vector3D shadowRayOrigin =
-                intersectPoint + wi * scene.shadow_ray_epsilon;
-
-            float stmin = FLOAT_MAX;
-
-            // TODO OPTIMIZE NORMALIZATION
-
-            for (auto &sobject : scene.objects) {
-              float st = FLOAT_MAX;
-
-              if (sobject->intersects(shadowRayOrigin, wi, st) && st < stmin) {
-                stmin = st;
-                // TODO: OPTIMIZE: NO NEED TO FIND CLOSER ONE!
-              }
-            }
-            // FIXME TODO
-            if (shadowRayOrigin.distance(light.position) < stmin + 0.0001) {
-              // std::cout << shadowRayOrigin.distance(light.position) << " "
-              //           << stmin << std::endl;
-
-              Vector3D halfVector = (wi + direction.inverse()).normalize(); // specular
-
-              float costheta_diff = std::max(float(0), wi.dotProduct(normal));
-              float costheta_spec =
-                  std::max(float(0), normal.dotProduct(halfVector));
-              // std::cout << costheta << std::endl;
-
-              float distance2 =
-                  pow((intersectPoint).distance(light.position), 2);
-              // diffuse shading
-              pixelColor =
-                  pixelColor + (kDiffuse * costheta_diff)
-                                   .multiply(light.intensity / distance2);
-              // specular shading
-              pixelColor =
-                  pixelColor +
-                  (kSpecular * pow(costheta_spec,
-                                   scene.materials[intersectObject->material_id]
-                                       .phong_exponent))
-                      .multiply(light.intensity / distance2);
-            }
-          }
-
-          // TODO FIX ROUNDING
-
-          image[i++] = std::min((int)pixelColor.x, 255); // r
-          image[i++] = std::min((int)pixelColor.y, 255); // g
-          image[i++] = std::min((int)pixelColor.z, 255); // b
-        } else {
-          image[i++] = scene.background_color.x; // r
-          image[i++] = scene.background_color.y; // g
-          image[i++] = scene.background_color.z; // b
-        }
+        image[i++] = pixelColor.x; // r
+        image[i++] = pixelColor.y; // g
+        image[i++] = pixelColor.z; // b
       }
     }
 
