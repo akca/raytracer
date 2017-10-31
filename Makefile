@@ -1,5 +1,5 @@
 all:
-	g++ *.cpp -o main -Wall -std=c++11 -O3
+	g++ -pthread *.cpp -o main -Wall -std=c++11 -O3 -lboost_system -lboost_thread
 clean:
 	rm main
 simple:
