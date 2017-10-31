@@ -1,6 +1,5 @@
 #include "parser.h"
 #include "ppm.h"
-#include <boost/thread.hpp>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -112,36 +111,36 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
   return pixelColor;
 }
 
-void trace(parser::Scene &scene, parser::Camera &camera, int startHeight,
+void trace(parser::Scene *scene, parser::Camera *camera, int startHeight,
            int endHeight, int imageWidth, int imageHeight,
            unsigned char *image) {
 
-  int i = 3 * (imageWidth * startHeight); // TODO OPTIMIZE
+  int i = 0; // TODO OPTIMIZE
 
   for (int y = startHeight; y < endHeight; ++y) {
     for (int x = 0; x < imageWidth; ++x) {
       // std::cout << x << " " << y << std::endl;
 
-      Vector3D cameraPosition(camera.position.x, camera.position.y,
-                              camera.position.z);
-      Vector3D cameraGaze(camera.gaze.x, camera.gaze.y, camera.gaze.z);
-      Vector3D cameraUp(camera.up.x, camera.up.y, camera.up.z);
+      Vector3D cameraPosition(camera->position.x, camera->position.y,
+                              camera->position.z);
+      Vector3D cameraGaze(camera->gaze.x, camera->gaze.y, camera->gaze.z);
+      Vector3D cameraUp(camera->up.x, camera->up.y, camera->up.z);
       Vector3D cameraRight = cameraGaze * cameraUp; // cross product TODO
       // std::cout << "cameraRight: " << cameraRight.x << " " << cameraRight.y
       // << " " << cameraRight.z << std::endl;
-      float pixelPositionX = (camera.near_plane.y - camera.near_plane.x) *
+      float pixelPositionX = (camera->near_plane.y - camera->near_plane.x) *
                              (x + 0.5) / imageWidth; // su
-      float pixelPositionY = (camera.near_plane.w - camera.near_plane.z) *
+      float pixelPositionY = (camera->near_plane.w - camera->near_plane.z) *
                              (y + 0.5) / imageHeight; // sv
       // std::cout << "PIXEL: " << pixelPositionX << " " << pixelPositionY <<
       // std::endl;
       Vector3D centerOfPlane =
-          cameraPosition + cameraGaze * camera.near_distance;
+          cameraPosition + cameraGaze * camera->near_distance;
       // std::cout << "centerOfPlane: " << centerOfPlane.x << " " <<
       // centerOfPlane.y << " " << centerOfPlane.z << std::endl;
       Vector3D planeStartPoint = centerOfPlane +
-                                 (cameraRight * camera.near_plane.x) +
-                                 (cameraUp * camera.near_plane.w);
+                                 (cameraRight * camera->near_plane.x) +
+                                 (cameraUp * camera->near_plane.w);
       // std::cout << "planeStartPoint: " << planeStartPoint.x << " " <<
       // planeStartPoint.y << " " << planeStartPoint.z << std::endl;
 
@@ -155,7 +154,7 @@ void trace(parser::Scene &scene, parser::Camera &camera, int startHeight,
       // direction.z << std::endl;
       direction.normalize();
 
-      Vector3D pixelColor = shade(scene, cameraPosition, direction, 0);
+      Vector3D pixelColor = shade(*scene, cameraPosition, direction, 0);
 
       // std::cout << "i: " << i << " - " << pixelColor.x << std::endl;
       image[i++] = pixelColor.x; // r
@@ -164,7 +163,7 @@ void trace(parser::Scene &scene, parser::Camera &camera, int startHeight,
     }
   }
 }
-
+/*
 void createThread(parser::Scene &scene, parser::Camera &camera, int startHeight,
                   int endHeight, int imageWidth, int imageHeight,
                   unsigned char *image) {
@@ -179,7 +178,7 @@ void createThread(parser::Scene &scene, parser::Camera &camera, int startHeight,
     t1.join();
     cout << "Thread with id " << t1.get_id() << " is terminated" << endl;
   }
-}
+}*/
 
 int main(int argc, char *argv[]) {
   parser::Scene scene;
@@ -195,7 +194,10 @@ int main(int argc, char *argv[]) {
     int width = camera.image_width;
     int height = camera.image_height;
 
-    unsigned char *image = new unsigned char[width * height * 3];
+    unsigned char *image1 = new unsigned char[width * height * 3 / 4];
+    unsigned char *image2 = new unsigned char[width * height * 3 / 4];
+    unsigned char *image3 = new unsigned char[width * height * 3 / 4];
+    unsigned char *image4 = new unsigned char[width * height * 3 / 4];
     /*
 void trace(parser::Scene &scene, parser::Camera &camera, int startHeight,
            int endHeight, int imageWidth, int imageHeight,
@@ -205,30 +207,49 @@ void trace(parser::Scene &scene, parser::Camera &camera, int startHeight,
     int partition = height / 4;
     int startHeight = 0;
     int endHeight = partition;
+    thread t1(trace, &scene, &camera, startHeight, endHeight, width, height,
+              image1);
+    startHeight = endHeight;
+    endHeight += partition;
+    thread t2(trace, &scene, &camera, startHeight, endHeight, width, height,
+              image2);
+    startHeight = endHeight;
+    endHeight += partition;
+    thread t3(trace, &scene, &camera, startHeight, endHeight, width, height,
+              image3);
+    startHeight = endHeight;
+    endHeight = height;
+    thread t4(trace, &scene, &camera, startHeight, endHeight, width, height,
+              image4);
 
-    for (size_t i = 0; i < 4; i++) {
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
 
-      thread t1(trace, std::ref(scene), std::ref(camera), startHeight,
-                endHeight, width, height, image);
+    /*
+for (size_t i = 0; i < 4; i++) {
 
-      // TODO MOVE THIS TO FUNCTION ABOVE
+thread t1(trace, std::ref(scene), std::ref(camera), startHeight,
+      endHeight, width, height, image);
 
-      if (t1.joinable()) {
-        t1.join();
-        cout << "Thread is terminated" << endl;
+// TODO MOVE THIS TO FUNCTION ABOVE
 
-        /*startHeight = endHeight + 1;
-        endHeight += partition;
-*/
-        // createThread(scene, camera, startHeight, endHeight, width, height,
-        //             image);
-      }
-      startHeight = endHeight;
-      endHeight += partition;
-    }
+if (t1.joinable()) {
+t1.join();
+cout << "Thread is terminated" << endl;
 
-    // trace(scene, camera, 300, 400, width, height, image);
 
-    write_ppm((camera.image_name).c_str(), image, width, height);
+// createThread(scene, camera, startHeight, endHeight, width, height,
+//             image);
+}
+startHeight = endHeight;
+endHeight += partition;
+}*/
+
+    // trace(scene, camera, 0, height, width, height, image);
+
+    unsigned char *imageArrays[]{image1, image2, image3, image4};
+    write_ppm((camera.image_name).c_str(), imageArrays, width, height);
   }
 }
