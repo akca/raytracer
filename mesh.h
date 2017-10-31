@@ -11,14 +11,13 @@ const float FLOAT_MAX = std::numeric_limits<float>::max();
 class Mesh : public Object {
 public:
   std::vector<Face> faces;
-  Vector3D *lastIntersectNormal;
 
   Mesh(std::vector<Face> &f, int m) {
     faces = f;
     material_id = m;
   }
 
-  bool intersects(const Vector3D &origin, const Vector3D &direction, float &t) {
+  bool intersects(const Vector3D &origin, const Vector3D &direction, float &t, Vector3D &normal) {
 
     float tmin = FLOAT_MAX;
     float t2 = FLOAT_MAX;
@@ -26,7 +25,7 @@ public:
     for (auto &f : faces) {
       if (f.intersects(origin, direction, t2) && t2 < tmin) {
         tmin = t2;
-        lastIntersectNormal = &(f.normal);
+        normal = f.normal;
       }
     }
 
@@ -37,9 +36,9 @@ public:
     else
       return false;
   }
-
+//TODO DELETE THIS!!!!!
   Vector3D &getNormalAt(const Vector3D &hitPoint) {
-    return *lastIntersectNormal;
+    return *(new Vector3D());
   }
 };
 

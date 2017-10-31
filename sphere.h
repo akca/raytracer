@@ -18,7 +18,7 @@ class Sphere : public Object {
 			material_id = material;
 		}
 
-		bool intersects(const Vector3D &origin, const Vector3D &direction, float &t) {
+		bool intersects(const Vector3D &origin, const Vector3D &direction, float &t, Vector3D &normal) {
 
 			Vector3D L = origin - center;
 
@@ -41,6 +41,11 @@ class Sphere : public Object {
 			} else {
 				t = t0;
 			}
+
+			//TODO HITPOINT RECALCULATED. POSSIBLE OPTIMIZE
+			normal = (new Vector3D(L + direction * t))->normalize();
+
+			//std::cout << normal.x << " " << normal.y << " " << normal.z << std::endl;
 
 			return true;
 		}

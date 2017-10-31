@@ -14,10 +14,12 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
   Object *intersectObject = NULL;
   float tmin = FLOAT_MAX;
 
+  Vector3D normal;
+
   for (auto &object : scene.objects) {
 
     float t = FLOAT_MAX;
-    if (object->intersects(cameraPosition, direction, t) && t < tmin) {
+    if (object->intersects(cameraPosition, direction, t, normal) && t < tmin) {
       tmin = t;
       intersectObject = object;
     }
@@ -26,9 +28,8 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
 
   // if intersection with an object found
   if (tmin < FLOAT_MAX) {
-    Vector3D intersectPoint = cameraPosition + direction * tmin;
 
-    Vector3D &normal = intersectObject->getNormalAt(intersectPoint);
+    Vector3D intersectPoint = cameraPosition + direction * tmin;
 
     Vector3D &kDiffuse = scene.materials[intersectObject->material_id].diffuse;
     Vector3D &kAmbient = scene.materials[intersectObject->material_id].ambient;
@@ -51,8 +52,8 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
 
       for (auto &sobject : scene.objects) {
         float st = FLOAT_MAX;
-
-        if (sobject->intersects(shadowRayOrigin, wi, st) && st < stmin) {
+        Vector3D tmp;
+        if (sobject->intersects(shadowRayOrigin, wi, st, tmp) && st < stmin + 0.0001) {
           stmin = st;
           // TODO: OPTIMIZE: NO NEED TO FIND CLOSER ONE!
         }
@@ -83,19 +84,22 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
                  scene.materials[intersectObject->material_id].phong_exponent))
                 .multiply(light.intensity / distance2);
 
-        Vector3D wr = (direction +
-                       (normal * 2) * (normal.dotProduct(direction.inverse())))
-                          .normalize(); // for reflectance
-
-        // reflection
-        if ((kMirror.x > 0.001 || kMirror.y > 0.001 || kMirror.z > 0.001) &&
-            recursionDepth < scene.max_recursion_depth) {
-
-          pixelColor =
-              pixelColor + kMirror.multiply(shade(scene, intersectPoint, wr,
-                                                  recursionDepth + 1));
-        }
       }
+    }
+
+    // reflection
+    if ((kMirror.x > 0.001 || kMirror.y > 0.001 || kMirror.z > 0.001) &&
+        recursionDepth < scene.max_recursion_depth) {
+
+      Vector3D wr = (direction +
+                     (normal * 2) * (normal.dotProduct(direction.inverse())))
+                        .normalize(); // for reflectance
+
+      Vector3D shadowRayOrigin = intersectPoint + wr * scene.shadow_ray_epsilon;
+
+      pixelColor =
+          pixelColor + kMirror.multiply(shade(scene, shadowRayOrigin, wr,
+                                              recursionDepth + 1));
     }
 
     // TODO FIX ROUNDING ###############################
@@ -227,6 +231,18 @@ void trace(parser::Scene &scene, parser::Camera &camera, int startHeight,
     t3.join();
     t4.join();
 
+    // trace(&scene, &camera, startHeight, endHeight, width, height, image1);
+    // startHeight = endHeight;
+    // endHeight += partition;
+    // trace(&scene, &camera, startHeight, endHeight, width, height, image2);
+    // startHeight = endHeight;
+    // endHeight += partition;
+    // trace(&scene, &camera, startHeight, endHeight, width, height, image3);
+    // startHeight = endHeight;
+    // endHeight = height;
+    // trace(&scene, &camera, startHeight, endHeight, width, height, image4);
+
+
     /*
 for (size_t i = 0; i < 4; i++) {
 
@@ -247,7 +263,6 @@ startHeight = endHeight;
 endHeight += partition;
 }*/
 
-    // trace(scene, camera, 0, height, width, height, image);
 
     unsigned char *imageArrays[]{image1, image2, image3, image4};
     write_ppm((camera.image_name).c_str(), imageArrays, width, height);

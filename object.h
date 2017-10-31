@@ -8,7 +8,7 @@ public:
   virtual ~Object() {}
 
   virtual bool intersects(const Vector3D &, const Vector3D &,
-                          float &) = 0;
+                          float &, Vector3D &) = 0;
   virtual Vector3D &getNormalAt(const Vector3D &hitPoint) = 0;
 
   Vector3D color; // TODO change data type!
