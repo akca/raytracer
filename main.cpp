@@ -119,7 +119,7 @@ void trace(parser::Scene *scene, parser::Camera *camera, int startHeight,
            int endHeight, int imageWidth, int imageHeight,
            unsigned char *image) {
 
-  int i = 0; // TODO OPTIMIZE
+  int i = startHeight * imageWidth * 3;
 
   for (int y = startHeight; y < endHeight; ++y) {
     for (int x = 0; x < imageWidth; ++x) {
@@ -198,10 +198,7 @@ int main(int argc, char *argv[]) {
     int width = camera.image_width;
     int height = camera.image_height;
 
-    unsigned char *image1 = new unsigned char[width * height * 3 / 4];
-    unsigned char *image2 = new unsigned char[width * height * 3 / 4];
-    unsigned char *image3 = new unsigned char[width * height * 3 / 4];
-    unsigned char *image4 = new unsigned char[width * height * 3 / 4];
+    unsigned char *image = new unsigned char[width * height * 3];
     /*
 void trace(parser::Scene &scene, parser::Camera &camera, int startHeight,
            int endHeight, int imageWidth, int imageHeight,
@@ -212,19 +209,19 @@ void trace(parser::Scene &scene, parser::Camera &camera, int startHeight,
     int startHeight = 0;
     int endHeight = partition;
     thread t1(trace, &scene, &camera, startHeight, endHeight, width, height,
-              image1);
+              image);
     startHeight = endHeight;
     endHeight += partition;
     thread t2(trace, &scene, &camera, startHeight, endHeight, width, height,
-              image2);
+              image);
     startHeight = endHeight;
     endHeight += partition;
     thread t3(trace, &scene, &camera, startHeight, endHeight, width, height,
-              image3);
+              image);
     startHeight = endHeight;
     endHeight = height;
     thread t4(trace, &scene, &camera, startHeight, endHeight, width, height,
-              image4);
+              image);
 
     t1.join();
     t2.join();
@@ -262,7 +259,6 @@ startHeight = endHeight;
 endHeight += partition;
 }*/
 
-    unsigned char *imageArrays[]{image1, image2, image3, image4};
-    write_ppm((camera.image_name).c_str(), imageArrays, width, height);
+    write_ppm((camera.image_name).c_str(), image, width, height);
   }
 }
