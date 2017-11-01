@@ -1,7 +1,7 @@
 all:
 	g++ -pthread *.cpp -o main -Wall -std=c++11 -O3
 clean:
-	rm main
+	rm main *.ppm
 simple:
 	./main hw1_sample_scenes/simple.xml
 	eog simple.ppm &
