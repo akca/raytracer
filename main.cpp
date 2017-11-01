@@ -65,9 +65,6 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
         // std::cout << shadowRayOrigin.distance(light.position) << " "
         //           << stmin << std::endl;
 
-        Vector3D halfVector =
-            (wi + direction.inverse()).normalize(); // for specular
-
         float costheta_diff = std::max(float(0), wi.dotProduct(normal));
         float distance2 = pow((intersectPoint).distance(light.position), 2);
 
@@ -75,6 +72,9 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
         pixelColor =
             pixelColor +
             (kDiffuse * costheta_diff).multiply(light.intensity / distance2);
+
+        Vector3D halfVector =
+            (wi + direction.inverse()).normalize(); // for specular
 
         float costheta_spec = std::max(float(0), normal.dotProduct(halfVector));
 
@@ -167,22 +167,6 @@ void trace(parser::Scene *scene, parser::Camera *camera, int startHeight,
     }
   }
 }
-/*
-void createThread(parser::Scene &scene, parser::Camera &camera, int startHeight,
-                  int endHeight, int imageWidth, int imageHeight,
-                  unsigned char *image) {
-  using std::cout;
-  using std::endl;
-  using std::thread;
-
-  thread t1(trace, std::ref(scene), std::ref(camera), startHeight, endHeight,
-            imageWidth, imageHeight, image);
-
-  if (t1.joinable()) {
-    t1.join();
-    cout << "Thread with id " << t1.get_id() << " is terminated" << endl;
-  }
-}*/
 
 int main(int argc, char *argv[]) {
   parser::Scene scene;
@@ -199,65 +183,27 @@ int main(int argc, char *argv[]) {
     int height = camera.image_height;
 
     unsigned char *image = new unsigned char[width * height * 3];
-    /*
-void trace(parser::Scene &scene, parser::Camera &camera, int startHeight,
-           int endHeight, int imageWidth, int imageHeight,
-           unsigned char *image) {
 
-*/
-    int partition = height / 4;
+    size_t threadCount = std::thread::hardware_concurrency();
+    int partition = height / threadCount;
     int startHeight = 0;
     int endHeight = partition;
-    thread t1(trace, &scene, &camera, startHeight, endHeight, width, height,
-              image);
-    startHeight = endHeight;
-    endHeight += partition;
-    thread t2(trace, &scene, &camera, startHeight, endHeight, width, height,
-              image);
-    startHeight = endHeight;
-    endHeight += partition;
-    thread t3(trace, &scene, &camera, startHeight, endHeight, width, height,
-              image);
-    startHeight = endHeight;
-    endHeight = height;
-    thread t4(trace, &scene, &camera, startHeight, endHeight, width, height,
-              image);
+    std::vector<thread> threads;
 
-    t1.join();
-    t2.join();
-    t3.join();
-    t4.join();
-
-    // trace(&scene, &camera, startHeight, endHeight, width, height, image1);
-    // startHeight = endHeight;
-    // endHeight += partition;
-    // trace(&scene, &camera, startHeight, endHeight, width, height, image2);
-    // startHeight = endHeight;
-    // endHeight += partition;
-    // trace(&scene, &camera, startHeight, endHeight, width, height, image3);
-    // startHeight = endHeight;
-    // endHeight = height;
-    // trace(&scene, &camera, startHeight, endHeight, width, height, image4);
-
-    /*
-for (size_t i = 0; i < 4; i++) {
-
-thread t1(trace, std::ref(scene), std::ref(camera), startHeight,
-      endHeight, width, height, image);
-
-// TODO MOVE THIS TO FUNCTION ABOVE
-
-if (t1.joinable()) {
-t1.join();
-cout << "Thread is terminated" << endl;
-
-
-// createThread(scene, camera, startHeight, endHeight, width, height,
-//             image);
-}
-startHeight = endHeight;
-endHeight += partition;
-}*/
+    for (size_t i = 0; i < threadCount; i++) {
+      threads.emplace_back(trace, &scene, &camera, startHeight, endHeight,
+                           width, height, image);
+      startHeight = endHeight;
+      if (i == threadCount - 2) {
+        endHeight = height;
+      } else {
+        endHeight += partition;
+      }
+    }
+    for (std::thread &t1 : threads) {
+      t1.join();
+    }
+    threads.clear();
 
     write_ppm((camera.image_name).c_str(), image, width, height);
   }
