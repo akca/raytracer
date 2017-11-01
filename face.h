@@ -19,13 +19,14 @@ public:
     normal = ((v3 - v2) * (v1 - v2)).normalize();
   }
 
-  bool intersects(const Vector3D &origin, const Vector3D &direction, float &t) {
+  bool intersects(const Vector3D &origin, const Vector3D &direction, float &t,
+                  bool isShadowRay) {
     /*		std::cout << v1.x <<v1.y<<v1.z<<std::endl;*/
     /*		std::cout << v2.x <<v2.y<<v2.z<<std::endl;*/
     /*		std::cout << v3.x <<v3.y<<v3.z<<std::endl;*/
 
-    // ignore back-facing triangles
-    if (normal.dotProduct(direction) > -0.001) {
+    // backface culling - ignore back-facing triangles
+    if (!isShadowRay && normal.dotProduct(direction) > -0.001) {
       return false;
     }
 
@@ -56,7 +57,8 @@ public:
 
     // TODO FIXME Tmin Tmax should be checked!
 
-    if (t > 0.00001 &&beta + gama <= 1.00001 && 0 <= beta + 0.00001 && 0 <= gama + 0.00001) {
+    if (t > 0.00001 && beta + gama <= 1.00001 && 0 <= beta + 0.00001 &&
+        0 <= gama + 0.00001) {
       return true;
     } else {
       return false;
