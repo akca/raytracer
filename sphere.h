@@ -54,10 +54,6 @@ public:
     return true;
   }
 
-  Vector3D &getNormalAt(const Vector3D &hitPoint) {
-    Vector3D *normal = new Vector3D(hitPoint - center);
-    return normal->normalize();
-  }
 };
 
 #endif

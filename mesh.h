@@ -37,8 +37,6 @@ public:
     else
       return false;
   }
-  // TODO DELETE THIS!!!!!
-  Vector3D &getNormalAt(const Vector3D &hitPoint) { return *(new Vector3D()); }
 };
 
 #endif

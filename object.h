@@ -9,7 +9,6 @@ public:
 
   virtual bool intersects(const Vector3D &, const Vector3D &,
                           float &, Vector3D &, bool isShadowRay) = 0;
-  virtual Vector3D &getNormalAt(const Vector3D &hitPoint) = 0;
 
   Vector3D color; // TODO change data type!
   int material_id;
