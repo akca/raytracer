@@ -28,7 +28,7 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
   Vector3D pixelColor;
 
   // if intersection with an object found
-  if (tmin < FLOAT_MAX) {
+  if (intersectObject != NULL) {
 
     Vector3D intersectPoint = cameraPosition + direction * tmin;
 
@@ -55,13 +55,13 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
         float st = FLOAT_MAX;
         Vector3D tmp;
         if (sobject->intersects(shadowRayOrigin, wi, st, tmp, true) &&
-            st < stmin + 0.00000001) {
+            st < stmin) {
           stmin = st;
           // TODO: OPTIMIZE: NO NEED TO FIND CLOSER ONE!
         }
       }
       // FIXME TODO
-      if (shadowRayOrigin.distance(light.position) < stmin + 0.00000001) {
+      if (shadowRayOrigin.distance(light.position) < stmin + 0.0001) {
         // std::cout << shadowRayOrigin.distance(light.position) << " "
         //           << stmin << std::endl;
 

@@ -26,7 +26,7 @@ public:
     /*		std::cout << v3.x <<v3.y<<v3.z<<std::endl;*/
 
     // backface culling - ignore back-facing triangles
-    if (!isShadowRay && normal.dotProduct(direction) > -0.001) {
+    if (!isShadowRay && normal.dotProduct(direction) > -0.00001) {
       return false;
     }
 
@@ -45,20 +45,21 @@ public:
                        v1.z - origin.z, v1.z - v3.z, direction.z) /
                  detA;
 
-    float gama = det33(v1.x - v2.x, v1.x - origin.x, direction.x, v1.y - v2.y,
-                       v1.y - origin.y, direction.y, v1.z - v2.z,
-                       v1.z - origin.z, direction.z) /
+    float gama = det33(v1.x - v2.x, v1.x - origin.x, direction.x,
+                       v1.y - v2.y, v1.y - origin.y, direction.y,
+                       v1.z - v2.z, v1.z - origin.z, direction.z) /
                  detA;
 
-    t = det33(v1.x - v2.x, v1.x - v3.x, v1.x - origin.x, v1.y - v2.y,
+    float t2 = det33(v1.x - v2.x, v1.x - v3.x, v1.x - origin.x, v1.y - v2.y,
               v1.y - v3.y, v1.y - origin.y, v1.z - v2.z, v1.z - v3.z,
               v1.z - origin.z) /
         detA;
 
     // TODO FIXME Tmin Tmax should be checked!
 
-    if (t > 0.00001 && beta + gama <= 1.00001 && 0 <= beta + 0.00001 &&
-        0 <= gama + 0.00001) {
+    if (t2 > -0.00001 && beta + gama <= 1.00001 && -0.00001 <= beta &&
+        -0.00001 <= gama) {
+      t = t2;
       return true;
     } else {
       return false;

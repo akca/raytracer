@@ -27,6 +27,7 @@ public:
       if (f.intersects(origin, direction, t2, isShadowRay) && t2 < tmin) {
         tmin = t2;
         normal = f.normal;
+        //std::cout << normal.x << " " << normal.y << " " << normal.z << " " << std::endl;
       }
     }
 
