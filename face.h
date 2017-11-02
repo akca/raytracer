@@ -34,7 +34,7 @@ public:
         det33(v1.x - v2.x, v1.x - v3.x, direction.x, v1.y - v2.y, v1.y - v3.y,
               direction.y, v1.z - v2.z, v1.z - v3.z, direction.z);
 
-        if (std::abs(detA) < 0.00001) { // TODO test this value!
+        if (std::abs(detA) < 0.00000001) { // TODO test this value!
           return false;
         }
 

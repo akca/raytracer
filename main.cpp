@@ -55,13 +55,13 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
         float st = FLOAT_MAX;
         Vector3D tmp;
         if (sobject->intersects(shadowRayOrigin, wi, st, tmp, true) &&
-            st < stmin + 0.0001) {
+            st < stmin + 0.00000001) {
           stmin = st;
           // TODO: OPTIMIZE: NO NEED TO FIND CLOSER ONE!
         }
       }
       // FIXME TODO
-      if (shadowRayOrigin.distance(light.position) < stmin + 0.0001) {
+      if (shadowRayOrigin.distance(light.position) < stmin + 0.00000001) {
         // std::cout << shadowRayOrigin.distance(light.position) << " "
         //           << stmin << std::endl;
 
@@ -89,7 +89,7 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
     }
 
     // reflection
-    if ((kMirror.x > 0.001 || kMirror.y > 0.001 || kMirror.z > 0.001) &&
+    if ((kMirror.x > 0.0001 || kMirror.y > 0.0001 || kMirror.z > 0.0001) &&
         recursionDepth < scene.max_recursion_depth) {
 
       Vector3D wr =
@@ -129,7 +129,7 @@ void trace(parser::Scene *scene, parser::Camera *camera, int startHeight,
                               camera->position.z);
       Vector3D cameraGaze(camera->gaze.x, camera->gaze.y, camera->gaze.z);
       Vector3D cameraUp(camera->up.x, camera->up.y, camera->up.z);
-      Vector3D cameraRight = cameraGaze * cameraUp; // cross product TODO
+      Vector3D cameraRight = (cameraGaze * cameraUp).normalize(); // cross product TODO
       // std::cout << "cameraRight: " << cameraRight.x << " " << cameraRight.y
       // << " " << cameraRight.z << std::endl;
       float pixelPositionX = (camera->near_plane.y - camera->near_plane.x) *
