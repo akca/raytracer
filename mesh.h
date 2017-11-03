@@ -21,11 +21,11 @@ public:
                   Vector3D &normal, bool isShadowRay) {
 
     float tmin = FLOAT_MAX;
-    float t2 = FLOAT_MAX;
+    t = FLOAT_MAX;
 
     for (auto &f : faces) {
-      if (f.intersects(origin, direction, t2, isShadowRay) && t2 < tmin) {
-        tmin = t2;
+      if (f.intersects(origin, direction, t, isShadowRay) && t < tmin) {
+        tmin = t;
         normal = f.normal;
         //std::cout << normal.x << " " << normal.y << " " << normal.z << " " << std::endl;
       }

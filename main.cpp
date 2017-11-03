@@ -22,6 +22,7 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
     if (object->intersects(cameraPosition, direction, t, normal, false) &&
         t < tmin) {
       tmin = t;
+      //std::cout << tmin << std::endl;
       intersectObject = object;
     }
   }
@@ -31,6 +32,7 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
   if (intersectObject != NULL) {
 
     Vector3D intersectPoint = cameraPosition + direction * tmin;
+    //std::cout << intersectPoint.x << " " <<intersectPoint.y << " " << intersectPoint.z << " " << std::endl;
 
     Vector3D &kDiffuse = scene.materials[intersectObject->material_id].diffuse;
     Vector3D &kAmbient = scene.materials[intersectObject->material_id].ambient;
@@ -61,11 +63,13 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
         }
       }
       // FIXME TODO
-      if (shadowRayOrigin.distance(light.position) < stmin + 0.0001) {
+      if (intersectPoint.distance(light.position) < stmin + 0.0001) {
         // std::cout << shadowRayOrigin.distance(light.position) << " "
         //           << stmin << std::endl;
 
         float costheta_diff = std::max(float(0), wi.dotProduct(normal));
+        //std::cout << costheta_diff << std::endl;
+
         float distance2 = pow((intersectPoint).distance(light.position), 2);
 
         // diffuse shading
