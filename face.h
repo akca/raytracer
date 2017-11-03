@@ -31,6 +31,13 @@ public:
 
     // do back-face culling if not shadow ray.
     // otherwise ignore rays that parallel to triangle normal.
+
+
+
+    // TODO MAKE IT BETTER !?!?!?!
+
+
+
     if ((!isShadowRay && det < 1e-8) || (fabs(det) < 1e-8))
       return false;
 
