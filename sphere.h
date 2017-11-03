@@ -35,7 +35,6 @@ public:
 
     if (t0 > t1)
       std::swap(t0, t1);
-    // std::cout << "ilginc: " << t0 << " " << t1 << std::endl;
 
     if (t1 < 0)
       return false; // both roots are negative, no intersection

@@ -13,15 +13,12 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
 
   Object *intersectObject = NULL;
   float tmin = FLOAT_MAX;
-
   Vector3D normal;
 
   for (auto &object : scene.objects) {
 
-    float t = FLOAT_MAX;
-    if (object->intersects(cameraPosition, direction, t, normal, false) &&
-        t < tmin) {
-      tmin = t;
+    if (object->intersects(cameraPosition, direction, tmin, normal, false)) {
+      //tmin = t;
       //std::cout << tmin << std::endl;
       intersectObject = object;
     }
@@ -47,30 +44,34 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
 
       Vector3D wi = (light.position - intersectPoint).normalize();
 
+      //std::cout << wi.x << " " <<wi.y << " " << wi.z << " " << std::endl;
+
       Vector3D shadowRayOrigin = intersectPoint + wi * scene.shadow_ray_epsilon;
 
       float stmin = FLOAT_MAX;
 
-      // TODO OPTIMIZE NORMALIZATION
-
+      // shadow ray
       for (auto &sobject : scene.objects) {
-        float st = FLOAT_MAX;
         Vector3D tmp;
-        if (sobject->intersects(shadowRayOrigin, wi, st, tmp, true) &&
-            st < stmin) {
-          stmin = st;
+        if (sobject->intersects(shadowRayOrigin, wi, stmin, tmp, true)) {
           // TODO: OPTIMIZE: NO NEED TO FIND CLOSER ONE!
         }
       }
       // FIXME TODO
-      if (intersectPoint.distance(light.position) < stmin + 0.0001) {
+
+      float lightDistance = intersectPoint.distance(light.position);
+
+      //std::cout << lightDistance << " " << stmin << std::endl;
+
+      if (lightDistance < stmin) {
         // std::cout << shadowRayOrigin.distance(light.position) << " "
         //           << stmin << std::endl;
 
         float costheta_diff = std::max(float(0), wi.dotProduct(normal));
         //std::cout << costheta_diff << std::endl;
+        //std::cout << normal.x << " " << normal.y << " " << normal.z << " " << std::endl;
 
-        float distance2 = pow((intersectPoint).distance(light.position), 2);
+        float distance2 = pow(lightDistance, 2);
 
         // diffuse shading
         pixelColor =
@@ -123,40 +124,37 @@ void trace(parser::Scene *scene, parser::Camera *camera, int startHeight,
            int endHeight, int imageWidth, int imageHeight,
            unsigned char *image) {
 
+// TODO: OPTIMIZE MOVE THESE AWAY FROM THIS FUNCTION.
+// TODO: THESE ARE COMMON TO ALL THREADS.
+   Vector3D cameraPosition(camera->position.x, camera->position.y,
+                           camera->position.z);
+   Vector3D cameraGaze(camera->gaze.x, camera->gaze.y, camera->gaze.z);
+   Vector3D cameraUp(camera->up.x, camera->up.y, camera->up.z);
+   Vector3D cameraRight = (cameraGaze * cameraUp).normalize(); // cross product TODO
+   // std::cout << "cameraRight: " << cameraRight.x << " " << cameraRight.y
+   // << " " << cameraRight.z << std::endl;
+
+   Vector3D centerOfPlane =
+       cameraPosition + cameraGaze * camera->near_distance;
+   Vector3D planeStartPoint = centerOfPlane +
+                              (cameraRight * camera->near_plane.x) +
+                              (cameraUp * camera->near_plane.w);
+
   int i = startHeight * imageWidth * 3;
 
   for (int y = startHeight; y < endHeight; ++y) {
     for (int x = 0; x < imageWidth; ++x) {
       // std::cout << x << " " << y << std::endl;
 
-      Vector3D cameraPosition(camera->position.x, camera->position.y,
-                              camera->position.z);
-      Vector3D cameraGaze(camera->gaze.x, camera->gaze.y, camera->gaze.z);
-      Vector3D cameraUp(camera->up.x, camera->up.y, camera->up.z);
-      Vector3D cameraRight = (cameraGaze * cameraUp).normalize(); // cross product TODO
-      // std::cout << "cameraRight: " << cameraRight.x << " " << cameraRight.y
-      // << " " << cameraRight.z << std::endl;
       float pixelPositionX = (camera->near_plane.y - camera->near_plane.x) *
                              (x + 0.5) / imageWidth; // su
       float pixelPositionY = (camera->near_plane.w - camera->near_plane.z) *
                              (y + 0.5) / imageHeight; // sv
-      // std::cout << "PIXEL: " << pixelPositionX << " " << pixelPositionY <<
-      // std::endl;
-      Vector3D centerOfPlane =
-          cameraPosition + cameraGaze * camera->near_distance;
-      // std::cout << "centerOfPlane: " << centerOfPlane.x << " " <<
-      // centerOfPlane.y << " " << centerOfPlane.z << std::endl;
-      Vector3D planeStartPoint = centerOfPlane +
-                                 (cameraRight * camera->near_plane.x) +
-                                 (cameraUp * camera->near_plane.w);
-      // std::cout << "planeStartPoint: " << planeStartPoint.x << " " <<
-      // planeStartPoint.y << " " << planeStartPoint.z << std::endl;
 
       Vector3D pixelPosition = planeStartPoint +
                                (cameraRight * pixelPositionX) -
                                (cameraUp * pixelPositionY);
-      // std::cout << "pixelPosition: " << pixelPosition.x << " " <<
-      // pixelPosition.y << " " << planeStartPoint.z << std::endl;
+
       Vector3D direction = pixelPosition - cameraPosition;
       // std::cout << "DIR: " << direction.x << " " << direction.y << " " <<
       // direction.z << std::endl;
@@ -164,7 +162,7 @@ void trace(parser::Scene *scene, parser::Camera *camera, int startHeight,
 
       Vector3D pixelColor = shade(*scene, cameraPosition, direction, 0);
 
-      // std::cout << "i: " << i << " - " << pixelColor.x << std::endl;
+      //std::cout << "i: " << i/3 << "- " << pixelColor.x <<" " << pixelColor.y <<" " << pixelColor.z << std::endl;
       image[i++] = pixelColor.x; // r
       image[i++] = pixelColor.y; // g
       image[i++] = pixelColor.z; // b
@@ -208,6 +206,8 @@ int main(int argc, char *argv[]) {
       t1.join();
     }
     threads.clear();
+
+    //trace(&scene, &camera, 0, height, width, height, image);
 
     write_ppm((camera.image_name).c_str(), image, width, height);
   }

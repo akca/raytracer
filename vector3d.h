@@ -2,7 +2,6 @@
 #define VECTOR3D_H__
 
 #include <cmath>
-#include <iostream>
 
 class Vector3D {
 public:
@@ -11,17 +10,6 @@ public:
   float z;
 
   float getLength() const { return sqrt(x * x + y * y + z * z); }
-
-  Vector3D &normalize() {
-
-    float length = getLength();
-
-    x /= length;
-    y /= length;
-    z /= length;
-
-    return *this;
-  }
 
   Vector3D() {
     x = 0;
@@ -39,6 +27,17 @@ public:
     x = i;
     y = j;
     z = k;
+  }
+
+  Vector3D &normalize() {
+
+    float length = getLength();
+
+    x /= length;
+    y /= length;
+    z /= length;
+
+    return *this;
   }
 
   Vector3D inverse() const { return Vector3D(-x, -y, -z); }

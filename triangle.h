@@ -16,8 +16,11 @@ public:
 
   bool intersects(const Vector3D &origin, const Vector3D &direction, float &t,
                   Vector3D &normal, bool isShadowRay) {
-    normal = face.normal;
-    return face.intersects(origin, direction, t, isShadowRay);
+    if (face.intersects(origin, direction, t, isShadowRay)) {
+      normal = face.normal;
+      return true;
+    }
+    return false;
   }
 
   Vector3D &getNormalAt(const Vector3D &hitPoint) { return face.normal; }
