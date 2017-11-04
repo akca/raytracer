@@ -37,13 +37,13 @@ public:
 
     Vector3D tVector = origin - v1;
     u = inverseDet * tVector.dotProduct(pVector);
-    if (u < 0 || u > 1) {
+    if (u < -1e-7 || u > 1 + 1e-7) {
       return false;
     }
 
     Vector3D qVector = tVector * v1v2;
     v = inverseDet * direction.dotProduct(qVector);
-    if (v < 0 || u + v > 1) {
+    if (v < -1e-7 || u + v > 1 + 1e-7) {
       return false;
     }
 
