@@ -1,5 +1,5 @@
 compile:
-	g++ *.cpp -o main -Wall -pthread -std=c++17 -O3 -march=native
+	g++ *.cpp -o raytracer -Wall -pthread -std=c++17 -O3 -march=native
 all: simple simple_shading simple_reflectance cornellbox mirror_spheres bunny dragon_bg sciencetree dragon_lowres horse_and_mug
 clean:
 	rm main *.ppm

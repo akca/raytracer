@@ -19,39 +19,36 @@ public:
     normal = ((v3 - v2) * (v1 - v2)).normalize();
   }
 
-  bool intersects(const Vector3D &origin, const Vector3D &direction, float &tmin,
-                  bool isShadowRay) {
-    float u;
-    float v;
+  bool intersects(const Vector3D &origin, const Vector3D &direction,
+                  float &tmin, bool isShadowRay) {
 
     Vector3D v1v2 = v2 - v1;
     Vector3D v1v3 = v3 - v1;
-    Vector3D pvec = direction * v1v3;
-    float det = v1v2.dotProduct(pvec);
+    Vector3D pVector = direction * v1v3;
+    float det = v1v2.dotProduct(pVector);
 
     // do back-face culling if not shadow ray.
-    // otherwise ignore rays that parallel to triangle normal.
-
-
-
-    // TODO MAKE IT BETTER !?!?!?!
-
-
-
-    if ((!isShadowRay && det < 1e-8) || (fabs(det) < 1e-8))
+    // otherwise ignore rays that orthogonal to triangle normal.
+    if ((!isShadowRay && det < 1e-8) || (isShadowRay && fabs(det) < 1e-8))
       return false;
 
-    float invDet = 1 / det;
+    float inverseDet = 1 / det;
+    float u, v;
 
-    Vector3D tvec = origin - v1;
-    u = tvec.dotProduct(pvec) * invDet;
-    if (u < 0 || u > 1) return false;
+    Vector3D tVector = origin - v1;
+    u = inverseDet * tVector.dotProduct(pVector);
+    if (u < 0 || u > 1) {
+      return false;
+    }
 
-    Vector3D qvec = tvec * v1v2;
-    v = direction.dotProduct(qvec) * invDet;
-    if (v < 0 || u + v > 1) return false;
+    Vector3D qVector = tVector * v1v2;
+    v = inverseDet * direction.dotProduct(qVector);
+    if (v < 0 || u + v > 1) {
+      return false;
+    }
 
-    float tmin_new = v1v3.dotProduct(qvec) * invDet;
+    float tmin_new = inverseDet * v1v3.dotProduct(qVector);
+
     if (tmin_new < tmin) {
       tmin = tmin_new;
       return true;

@@ -50,7 +50,7 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
       Vector3D shadowRayOrigin = intersectPoint + wi * scene.shadow_ray_epsilon;
       Vector3D tmp_vec;
       float stmin = FLOAT_MAX;
-      float lightDistance = shadowRayOrigin.distance(light.position);
+      float lightDistance = intersectPoint.distance(light.position);
       bool underShadow = false;
 
       // shadow ray
@@ -125,7 +125,7 @@ void trace(parser::Scene *scene, parser::Camera *camera, int startHeight,
            int endHeight, int imageWidth, int imageHeight,
            unsigned char *image) {
 
-  // TODO: OPTIMIZE MOVE THESE AWAY FROM THIS FUNCTION.
+  // TODO: OPTIMIZE: MOVE THESE AWAY FROM THIS FUNCTION.
   // TODO: THESE ARE COMMON TO ALL THREADS.
   Vector3D cameraPosition(camera->position.x, camera->position.y,
                           camera->position.z);
@@ -200,7 +200,7 @@ int main(int argc, char *argv[]) {
       threads.emplace_back(trace, &scene, &camera, startHeight, endHeight,
                            width, height, image);
       startHeight = endHeight;
-      if (i == threadCount - 2) {
+      if (i >= threadCount - 2) {
         endHeight = height;
       } else {
         endHeight += partition;
