@@ -7,8 +7,6 @@
 #include <limits>
 #include <vector>
 
-const float FLOAT_MAX = std::numeric_limits<float>::max();
-
 class Mesh : public Object {
 public:
   std::vector<Face> faces;
@@ -32,7 +30,7 @@ public:
       }
     }
 
-    if (tmin_new > 0 && tmin_new < tmin) {
+    if (tmin_new > -1e-8 && tmin_new < tmin) {
       tmin = tmin_new;
       normal = normal_new;
       return true;

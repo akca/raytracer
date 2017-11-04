@@ -46,7 +46,7 @@ public:
     }
 
     // TODO HITPOINT RECALCULATED. POSSIBLE OPTIMIZE
-    normal = (new Vector3D(L + direction * t))->normalize();
+    normal = (L + direction * t).normalize();
 
     // std::cout << normal.x << " " << normal.y << " " << normal.z << std::endl;
 

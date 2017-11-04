@@ -49,7 +49,7 @@ public:
 
     float tmin_new = inverseDet * v1v3.dotProduct(qVector);
 
-    if (tmin_new > 0 && tmin_new < tmin) {
+    if (tmin_new > -1e-8 && tmin_new < tmin) {
       tmin = tmin_new;
       return true;
     } else {
