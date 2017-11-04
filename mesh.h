@@ -30,7 +30,7 @@ public:
       }
     }
 
-    if (tmin_new > -1e-8 && tmin_new < tmin) {
+    if (tmin_new < tmin) {
       tmin = tmin_new;
       normal = normal_new;
       return true;
