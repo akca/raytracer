@@ -56,7 +56,7 @@ Vector3D shade(parser::Scene &scene, Vector3D &cameraPosition,
       // shadow ray
       for (auto &sobject : scene.objects) {
         if (sobject->intersects(shadowRayOrigin, wi, stmin, tmp_vec, true)) {
-          if (lightDistance >= stmin) {
+          if (lightDistance > stmin) {
             underShadow = true;
             break;
           }
