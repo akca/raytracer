@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
 
     unsigned char *image = new unsigned char[width * height * 3];
 
-    size_t threadCount = std::thread::hardware_concurrency();
+    size_t threadCount = 128;
     int partition = height / threadCount;
     int startHeight = 0;
     int endHeight = partition;

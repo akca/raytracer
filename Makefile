@@ -1,6 +1,6 @@
 compile:
 	g++ *.cpp -o raytracer -Wall -pthread -std=c++17 -O3 -march=native
-all: simple simple_shading simple_reflectance cornellbox mirror_spheres bunny dragon_bg sciencetree dragon_lowres horse_and_mug
+all: simple simple_shading simple_reflectance cornellbox mirror_spheres bunny dragon_bg sciencetree sciencetree_wp dragon_lowres horse_and_mug
 clean:
 	rm raytracer *.ppm
 simple:
@@ -23,3 +23,5 @@ horse_and_mug:
 	./raytracer hw1_sample_scenes/horse_and_mug.xml
 sciencetree:
 	./raytracer hw1_sample_scenes/sciencetree.xml
+sciencetree_wp:
+	./raytracer hw1_sample_scenes/sciencetree_wp.xml
