@@ -8,7 +8,7 @@ bool quadraticSolve(const float &a, const float &b, const float &c, float &t0,
   if (delta < 0) {
     return false; // no soln
   } else {
-    float q = (b > 0) ? (b + sqrt(delta)) * -0.5 : (b - sqrt(delta)) * -0.5;
+    float q = (b > 0) ? (b + sqrtf(delta)) * -0.5 : (b - sqrtf(delta)) * -0.5;
     t0 = q / a;
     t1 = c / q;
   }

@@ -77,6 +77,13 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     stream >> camera.image_width >> camera.image_height;
     stream >> camera.image_name;
 
+    camera.gaze.normalize();
+    camera.right = (camera.gaze * camera.up).normalize();
+    camera.up = camera.right * camera.gaze;
+    camera.centerOfPlane = camera.position + camera.gaze * camera.near_distance;
+    camera.planeStartPoint = camera.centerOfPlane +
+                             (camera.right * camera.near_plane.x) +
+                             (camera.up * camera.near_plane.w);
     cameras.push_back(camera);
     element = element->NextSiblingElement("Camera");
   }
@@ -159,14 +166,15 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     while (!(stream >> v0_id).eof()) {
       stream >> v1_id >> v2_id;
 
-      Face face(vertex_data[v0_id - 1], vertex_data[v1_id - 1],
-                vertex_data[v2_id - 1]);
+      Face face(vertex_data[v0_id - 1],
+                vertex_data[v1_id - 1] - vertex_data[v0_id - 1],
+                vertex_data[v2_id - 1] - vertex_data[v0_id - 1]);
 
       faces.push_back(face);
     }
     stream.clear();
 
-    objects.push_back(new Mesh(faces, material_id - 1)); // TODO DEALLOCATION
+    objects.push_back(new Mesh(faces, material_id - 1));
     // mesh.faces.clear();
     element = element->NextSiblingElement("Mesh");
   }
@@ -188,10 +196,11 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     stream << child->GetText() << std::endl;
     stream >> v0_id >> v1_id >> v2_id;
 
-    Face face(vertex_data[v0_id - 1], vertex_data[v1_id - 1],
-              vertex_data[v2_id - 1]);
+    Face face(vertex_data[v0_id - 1],
+              vertex_data[v1_id - 1] - vertex_data[v0_id - 1],
+              vertex_data[v2_id - 1] - vertex_data[v0_id - 1]);
 
-    objects.push_back(new Triangle(face, material_id - 1)); // TODO DEALLOCATION
+    objects.push_back(new Triangle(face, material_id - 1));
 
     element = element->NextSiblingElement("Triangle");
   }
@@ -216,13 +225,8 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     stream << child->GetText() << std::endl;
     stream >> radius;
 
-    // std::cout << "sphere material id: " << material_id - 1 << std::endl;
-    // std::cout << "sphere material: " << materials[material_id - 1].diffuse.x
-    //           << " " << materials[material_id - 1].diffuse.y << " "
-    //           << materials[material_id - 1].diffuse.z << std::endl;
-
-    objects.push_back(new Sphere(vertex_data[center_vertex_id - 1], radius,
-                                 material_id - 1)); // TODO DEALLOCATION
+    objects.push_back(
+        new Sphere(vertex_data[center_vertex_id - 1], radius, material_id - 1));
     element = element->NextSiblingElement("Sphere");
   }
 }

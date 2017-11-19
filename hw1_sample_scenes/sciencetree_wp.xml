@@ -12,7 +12,7 @@
           <Up>0 1 0</Up>
           <NearPlane>-1 1 -0.5 0.5</NearPlane>
           <NearDistance>1</NearDistance>
-          <ImageResolution>800 480</ImageResolution>
+          <ImageResolution>1920 1080</ImageResolution>
           <NumSamples>1</NumSamples>
           <ImageName>scienceTree_wp.ppm</ImageName>
       </Camera>
@@ -22,7 +22,7 @@
           <Up>0 1 0</Up>
           <NearPlane>-1 1 -0.5 0.5</NearPlane>
           <NearDistance>1</NearDistance>
-          <ImageResolution>800 480</ImageResolution>
+          <ImageResolution>1920 1080</ImageResolution>
           <NumSamples>1</NumSamples>
           <ImageName>scienceTree_t1.ppm</ImageName>
       </Camera>
@@ -32,7 +32,7 @@
           <Up>0 1 0</Up>
           <NearPlane>-1 1 -0.5 0.5</NearPlane>
           <NearDistance>1</NearDistance>
-          <ImageResolution>800 480</ImageResolution>
+          <ImageResolution>1920 1080</ImageResolution>
           <NumSamples>1</NumSamples>
           <ImageName>scienceTree_t2.ppm</ImageName>
       </Camera>
@@ -77,13 +77,6 @@
             <DiffuseReflectance>0.500000 0.500000 0.500000</DiffuseReflectance>
             <SpecularReflectance>0 0 0</SpecularReflectance>
             <MirrorReflectance>0.3 0.3 0.3</MirrorReflectance>
-            <PhongExponent>1</PhongExponent>
-        </Material>
-        <Material id="5">
-            <AmbientReflectance>0 0 0</AmbientReflectance>
-            <DiffuseReflectance>1 1 1</DiffuseReflectance>
-            <SpecularReflectance>0 0 0</SpecularReflectance>
-            <MirrorReflectance>0.8 0.8 0.8</MirrorReflectance>
             <PhongExponent>1</PhongExponent>
         </Material>
     </Materials>
@@ -1228,7 +1221,6 @@
         34.826561 0.000000 34.826561
         -34.826561 -0.000000 -34.826561
         34.826572 0.000001 -34.826569
-        0 0 0
     </VertexData>
 
     <Objects>
@@ -3492,10 +3484,5 @@
                 1137 1139 1138
             </Faces>
         </Mesh>
-        <Sphere id="1">
-            <Material>5</Material>
-            <Center>1140</Center>
-            <Radius>0.5</Radius>
-        </Sphere>
     </Objects>
 </Scene>

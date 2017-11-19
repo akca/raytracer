@@ -9,7 +9,7 @@ public:
   float y;
   float z;
 
-  float getLength() const { return sqrt(x * x + y * y + z * z); }
+  float getLength() const { return sqrtf(x * x + y * y + z * z); }
 
   Vector3D() {
     x = 0;
@@ -59,7 +59,7 @@ public:
     return Vector3D(x * cons, y * cons, z * cons);
   }
 
-  // Vector cross product TODO
+  // Vector cross product
   Vector3D operator*(const Vector3D &v) const {
     return Vector3D(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
   }
@@ -73,7 +73,7 @@ public:
   }
 
   float distance(const Vector3D &v) const {
-    return sqrt(pow((x - v.x), 2) + pow((y - v.y), 2) + pow((z - v.z), 2));
+    return sqrtf(pow((x - v.x), 2) + pow((y - v.y), 2) + pow((z - v.z), 2));
   }
 };
 

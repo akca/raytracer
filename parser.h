@@ -23,6 +23,9 @@ struct Camera {
   Vector3D position;
   Vector3D gaze;
   Vector3D up;
+  Vector3D right;
+  Vector3D centerOfPlane;
+  Vector3D planeStartPoint;
   Vec4f near_plane;
   float near_distance;
   int image_width, image_height;

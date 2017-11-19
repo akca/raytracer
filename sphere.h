@@ -25,9 +25,7 @@ public:
 
     float b = 2 * direction.dotProduct(L);
     float c = L.dotProduct(L) - r2;
-    // std::cout << "ORG: " << origin.x << " " << origin.y << " " << origin.z <<
-    // std::endl;  std::cout << "EHEH: " << 1 << " " << b << " " << c <<
-    // std::endl;
+
     float t0, t1; // these will become roots
     if (!quadraticSolve(1, b, c, t0, t1)) {
       return false;
@@ -48,11 +46,8 @@ public:
     // TODO HITPOINT RECALCULATED. POSSIBLE OPTIMIZE
     normal = (L + direction * t).normalize();
 
-    // std::cout << normal.x << " " << normal.y << " " << normal.z << std::endl;
-
     return true;
   }
-
 };
 
 #endif
