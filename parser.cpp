@@ -116,24 +116,62 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
   Material material;
   while (element) {
     child = element->FirstChildElement("AmbientReflectance");
-    stream << child->GetText() << std::endl;
+    if (child) {
+      stream << child->GetText() << std::endl;
+      stream >> material.ambient.x >> material.ambient.y >> material.ambient.z;
+    }
     child = element->FirstChildElement("DiffuseReflectance");
-    stream << child->GetText() << std::endl;
+    if (child) {
+      stream << child->GetText() << std::endl;
+      stream >> material.diffuse.x >> material.diffuse.y >> material.diffuse.z;
+    }
     child = element->FirstChildElement("SpecularReflectance");
-    stream << child->GetText() << std::endl;
+    if (child) {
+      stream << child->GetText() << std::endl;
+      stream >> material.specular.x >> material.specular.y >>
+          material.specular.z;
+    }
     child = element->FirstChildElement("MirrorReflectance");
-    stream << child->GetText() << std::endl;
+    if (child) {
+      stream << child->GetText() << std::endl;
+      stream >> material.mirror.x >> material.mirror.y >> material.mirror.z;
+    }
     child = element->FirstChildElement("PhongExponent");
-    stream << child->GetText() << std::endl;
-
-    stream >> material.ambient.x >> material.ambient.y >> material.ambient.z;
-    stream >> material.diffuse.x >> material.diffuse.y >> material.diffuse.z;
-    stream >> material.specular.x >> material.specular.y >> material.specular.z;
-    stream >> material.mirror.x >> material.mirror.y >> material.mirror.z;
-    stream >> material.phong_exponent;
+    if (child) {
+      stream << child->GetText() << std::endl;
+      stream >> material.phong_exponent;
+    }
 
     materials.push_back(material);
     element = element->NextSiblingElement("Material");
+  }
+
+  // Get Transformations
+  element = root->FirstChildElement("Transformations");
+  if (element) {
+    Vec3f tmp;
+    child = element->FirstChildElement("Translation");
+    while (child) {
+      stream << child->GetText() << std::endl;
+      stream >> tmp.x >> tmp.y >> tmp.z;
+      t_translation.push_back(tmp);
+      child = element->NextSiblingElement("Translation");
+    }
+    child = element->FirstChildElement("Scaling");
+    while (child) {
+      stream << child->GetText() << std::endl;
+      stream >> tmp.x >> tmp.y >> tmp.z;
+      t_scaling.push_back(tmp);
+      child = element->NextSiblingElement("Scaling");
+    }
+    Vec4f tmp2;
+    child = element->FirstChildElement("Rotation");
+    while (child) {
+      stream << child->GetText() << std::endl;
+      stream >> tmp2.x >> tmp2.y >> tmp2.z >> tmp2.w;
+      t_rotation.push_back(tmp2);
+      child = element->NextSiblingElement("Rotation");
+    }
   }
 
   // Get VertexData

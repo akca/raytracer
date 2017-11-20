@@ -15,6 +15,10 @@ struct Vec3i {
   int x, y, z;
 };
 
+struct Vec3f {
+  float x, y, z;
+};
+
 struct Vec4f {
   float x, y, z, w;
 };
@@ -44,33 +48,6 @@ struct Material {
   Vector3D mirror;
   float phong_exponent;
 };
-/*
-        struct Face
-        {
-                int v0_id;
-                int v1_id;
-                int v2_id;
-        };
-*/
-/*
-        struct Mesh
-        {
-                int material_id;
-                std::vector<Face> faces;
-        };
-
-        struct Triangle
-        {
-                int material_id;
-                Face indices;
-        };
-
-        struct Sphere
-        {
-                int material_id;
-                int center_vertex_id;
-                float radius;
-        };*/
 
 struct Scene {
   // Data
@@ -83,6 +60,9 @@ struct Scene {
   std::vector<Material> materials;
   std::vector<Vector3D> vertex_data;
   std::vector<Object *> objects;
+  std::vector<parser::Vec3f> t_translation;
+  std::vector<parser::Vec4f> t_rotation;
+  std::vector<parser::Vec3f> t_scaling;
 
   // Functions
   void loadFromXml(const std::string &filepath);
