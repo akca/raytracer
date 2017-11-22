@@ -2,6 +2,7 @@
 #include "mesh.h"
 #include "parser.h"
 #include "sphere.h"
+#include "texture.h"
 #include "tinyxml2.h"
 #include "triangle.h"
 #include <sstream>
@@ -146,6 +147,38 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     element = element->NextSiblingElement("Material");
   }
 
+  // Get Textures
+  element = root->FirstChildElement("Textures");
+  if (element) {
+    element = element->FirstChildElement("Texture");
+    while (element) {
+      std::string name, intpol, decal, app;
+
+      child = element->FirstChildElement("ImageName");
+      if (child) {
+        stream << child->GetText() << std::endl;
+        stream >> name;
+      }
+      child = element->FirstChildElement("Interpolation");
+      if (child) {
+        stream << child->GetText() << std::endl;
+        stream >> intpol;
+      }
+      child = element->FirstChildElement("DecalMode");
+      if (child) {
+        stream << child->GetText() << std::endl;
+        stream >> decal;
+      }
+      child = element->FirstChildElement("Appearance");
+      if (child) {
+        stream << child->GetText() << std::endl;
+        stream >> app;
+      }
+
+      textures.push_back(Texture(name, intpol, decal, app));
+      element = element->NextSiblingElement("Texture");
+    }
+  }
   // Get Transformations
   element = root->FirstChildElement("Transformations");
   if (element) {
@@ -191,10 +224,18 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
   while (element) {
     std::vector<Face> faces;
     int material_id;
+    int texture_id = 0;
 
     child = element->FirstChildElement("Material");
     stream << child->GetText() << std::endl;
     stream >> material_id;
+
+    child = element->FirstChildElement("Texture");
+    if (child) {
+      stream << child->GetText() << std::endl;
+      stream >> texture_id;
+      textures[texture_id - 1].loadImage();
+    }
 
     child = element->FirstChildElement("Faces");
     stream << child->GetText() << std::endl;
@@ -212,7 +253,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     }
     stream.clear();
 
-    objects.push_back(new Mesh(faces, material_id - 1));
+    objects.push_back(new Mesh(faces, material_id - 1, texture_id - 1));
     // mesh.faces.clear();
     element = element->NextSiblingElement("Mesh");
   }
@@ -224,6 +265,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
 
   while (element) {
     int material_id;
+    int texture_id = 0;
     int v0_id, v1_id, v2_id;
 
     child = element->FirstChildElement("Material");
@@ -234,11 +276,18 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     stream << child->GetText() << std::endl;
     stream >> v0_id >> v1_id >> v2_id;
 
+    child = element->FirstChildElement("Texture");
+    if (child) {
+      stream << child->GetText() << std::endl;
+      stream >> texture_id;
+      textures[texture_id - 1].loadImage();
+    }
+
     Face face(vertex_data[v0_id - 1],
               vertex_data[v1_id - 1] - vertex_data[v0_id - 1],
               vertex_data[v2_id - 1] - vertex_data[v0_id - 1]);
 
-    objects.push_back(new Triangle(face, material_id - 1));
+    objects.push_back(new Triangle(face, material_id - 1, texture_id - 1));
 
     element = element->NextSiblingElement("Triangle");
   }
@@ -248,6 +297,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
   element = element->FirstChildElement("Sphere");
   while (element) {
     int material_id;
+    int texture_id = 0;
     int center_vertex_id;
     float radius;
 
@@ -263,8 +313,15 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     stream << child->GetText() << std::endl;
     stream >> radius;
 
-    objects.push_back(
-        new Sphere(vertex_data[center_vertex_id - 1], radius, material_id - 1));
+    child = element->FirstChildElement("Texture");
+    if (child) {
+      stream << child->GetText() << std::endl;
+      stream >> texture_id;
+      textures[texture_id - 1].loadImage();
+    }
+
+    objects.push_back(new Sphere(vertex_data[center_vertex_id - 1], radius,
+                                 material_id - 1, texture_id - 1));
     element = element->NextSiblingElement("Sphere");
   }
 }

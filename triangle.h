@@ -9,19 +9,13 @@ class Triangle : public Object {
 public:
   Face face;
 
-  Triangle(Face &f, int m) {
-    face = f;
+  Triangle(Face &f, int m, int t) : face(f) {
     material_id = m;
+    texture_id = t;
   }
 
   bool intersects(const Vector3D &origin, const Vector3D &direction, float &t,
-                  Vector3D &normal, bool isShadowRay) {
-    if (face.intersects(origin, direction, t, isShadowRay)) {
-      normal = face.normal;
-      return true;
-    }
-    return false;
-  }
+                  Vector3D &normal, bool isShadowRay);
 
   Vector3D &getNormalAt(const Vector3D &hitPoint) { return face.normal; }
 };

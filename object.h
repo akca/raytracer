@@ -1,6 +1,7 @@
 #ifndef OBJECT_H__
 #define OBJECT_H__
 
+#include "texture.h"
 #include "vector3d.h"
 
 class Object {
@@ -10,8 +11,8 @@ public:
   virtual bool intersects(const Vector3D &, const Vector3D &, float &,
                           Vector3D &, bool isShadowRay) = 0;
 
-  Vector3D color;
   int material_id;
+  int texture_id;
 };
 
 bool quadraticSolve(const float &a, const float &b, const float &c, float &t0,

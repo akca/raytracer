@@ -1,7 +1,7 @@
 compile:
-	g++ *.cpp -o raytracer -Wall -pthread -std=c++17 -O3 -march=native
+	g++ *.cpp -o raytracer -Wall -pthread -ljpeg -std=c++17 -O3 -march=native
 debug:
-	g++ *.cpp -o raytracer -Wall -pthread -std=c++17 -g
+	g++ *.cpp -o raytracer -Wall -pthread -ljpeg -std=c++17 -g
 all: simple simple_shading simple_reflectance cornellbox mirror_spheres bunny dragon_bg sciencetree sciencetree_wp dragon_lowres horse_and_mug
 clean:
 	rm raytracer *.ppm
@@ -27,3 +27,19 @@ sciencetree:
 	./raytracer hw1_sample_scenes/sciencetree.xml
 sciencetree_wp:
 	./raytracer hw1_sample_scenes/sciencetree_wp.xml
+
+# hw2
+ellipsoids_texture_bilinear:
+	./raytracer hw2_sample_scenes/ellipsoids_texture_bilinear.xml
+ellipsoids_texture_nearest:
+	./raytracer hw2_sample_scenes/ellipsoids_texture_nearest.xml
+horse_instanced:
+	./raytracer hw2_sample_scenes/horse_instanced.xml
+horse:
+	./raytracer hw2_sample_scenes/horse.xml
+simple_transform:
+	./raytracer hw2_sample_scenes/simple_transform.xml
+skybox:
+	./raytracer hw2_sample_scenes/skybox.xml
+spheres_transform:
+	./raytracer hw2_sample_scenes/spheres_transform.xml

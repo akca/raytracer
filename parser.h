@@ -3,6 +3,7 @@
 
 #include "face.h"
 #include "object.h"
+#include "texture.h"
 #include "vector3d.h"
 #include <string>
 #include <vector>
@@ -58,6 +59,7 @@ struct Scene {
   Vector3D ambient_light;
   std::vector<PointLight> point_lights;
   std::vector<Material> materials;
+  std::vector<Texture> textures;
   std::vector<Vector3D> vertex_data;
   std::vector<Object *> objects;
   std::vector<parser::Vec3f> t_translation;
