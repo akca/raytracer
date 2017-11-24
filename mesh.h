@@ -1,11 +1,8 @@
 #ifndef MESH_H__
 #define MESH_H__
-#include "face.h"
-#include "object.h"
-#include "vector3d.h"
-#include <iostream>
-#include <limits>
+
 #include <vector>
+#include "face.h"
 
 class Mesh : public Object {
 public:
@@ -18,6 +15,9 @@ public:
 
   bool intersects(const Vector3D &origin, const Vector3D &direction,
                   float &tmin, Vector3D &normal, bool isShadowRay);
+
+  Vec2f getTexturePoint(Vector3D &);
+
 };
 
 #endif

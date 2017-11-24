@@ -1,5 +1,6 @@
 #include "sphere.h"
 #include <algorithm>
+#include <iostream>
 
 bool Sphere::intersects(const Vector3D &origin, const Vector3D &direction,
                         float &t, Vector3D &normal, bool isShadowRay) {
@@ -30,4 +31,12 @@ bool Sphere::intersects(const Vector3D &origin, const Vector3D &direction,
   normal = (L + direction * t).normalize();
 
   return true;
+}
+
+Vec2f Sphere::getTexturePoint(Vector3D &intersectPoint) {
+  Vec2f result;
+  Vector3D relative = intersectPoint - center;
+  result.x = -atan2(relative.z, relative.x) / (2 * M_PI) + 0.5f; // u
+  result.y = acos(relative.y / r) / M_PI; // v
+  return result;
 }

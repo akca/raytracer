@@ -18,6 +18,8 @@ public:
                   Vector3D &normal, bool isShadowRay);
 
   Vector3D &getNormalAt(const Vector3D &hitPoint) { return face.normal; }
+
+  Vec2f getTexturePoint(Vector3D &);
 };
 
 #endif

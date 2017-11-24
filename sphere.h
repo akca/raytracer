@@ -18,6 +18,9 @@ public:
 
   bool intersects(const Vector3D &origin, const Vector3D &direction, float &t,
                   Vector3D &normal, bool isShadowRay);
+
+  Vec2f getTexturePoint(Vector3D &);
+
 };
 
 #endif

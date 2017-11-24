@@ -1,7 +1,8 @@
-#ifndef __HW1__PARSER__
-#define __HW1__PARSER__
+#ifndef __RAYTRACER__PARSER__
+#define __RAYTRACER__PARSER__
 
 #include "face.h"
+#include "utility.h"
 #include "object.h"
 #include "texture.h"
 #include "vector3d.h"
@@ -9,20 +10,6 @@
 #include <vector>
 
 namespace parser {
-// Notice that all the structures are as simple as possible
-// so that you are not enforced to adopt any style or design.
-
-struct Vec3i {
-  int x, y, z;
-};
-
-struct Vec3f {
-  float x, y, z;
-};
-
-struct Vec4f {
-  float x, y, z, w;
-};
 
 struct Camera {
   Vector3D position;
@@ -62,9 +49,9 @@ struct Scene {
   std::vector<Texture> textures;
   std::vector<Vector3D> vertex_data;
   std::vector<Object *> objects;
-  std::vector<parser::Vec3f> t_translation;
-  std::vector<parser::Vec4f> t_rotation;
-  std::vector<parser::Vec3f> t_scaling;
+  std::vector<Vec3f> t_translation;
+  std::vector<Vec4f> t_rotation;
+  std::vector<Vec3f> t_scaling;
 
   // Functions
   void loadFromXml(const std::string &filepath);

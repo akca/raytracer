@@ -62,10 +62,39 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction,
         float distance2 = pow(lightDistance, 2);
 
         // diffuse shading
-        pixelColor =
-            pixelColor +
-            (kDiffuse * costheta_diff).multiply(light.intensity / distance2);
+        if (intersectObject->texture_id == -1) {
+          pixelColor =
+              pixelColor +
+              (kDiffuse * costheta_diff).multiply(light.intensity / distance2);
+        } else {
+          Texture &texture = scene.textures[intersectObject->texture_id];
 
+          DecalMode decalMode = texture.getDecalMode();
+          Vec2f texturePoint = intersectObject->getTexturePoint(intersectPoint);
+
+          Vector3D textureColor =
+              texture.getColor(texturePoint, texture.getInterpolation());
+          /*  if (texture.getWidth() == 1280)
+              std::cout << texturePoint.x << " " << texturePoint.y << std::endl;
+  */
+          switch (decalMode) {
+          case REPLACE_KD:
+            pixelColor =
+                pixelColor + (textureColor / 256 * costheta_diff)
+                                 .multiply(light.intensity / distance2);
+            break;
+          case BLEND_KD:
+            pixelColor =
+                pixelColor +
+                ((kDiffuse / 256 + textureColor) * 0.5f * costheta_diff)
+                    .multiply(light.intensity / distance2);
+
+            break;
+          case REPLACE_ALL:
+            pixelColor = pixelColor + textureColor;
+            break;
+          }
+        }
         Vector3D halfVector =
             (wi + direction.inverse()).normalize(); // for specular
 
@@ -158,23 +187,23 @@ int main(int argc, char *argv[]) {
     int startHeight = 0;
     int endHeight = partition;
     std::vector<thread> threads;
-
-    for (size_t i = 0; i < threadCount; i++) {
-      threads.emplace_back(trace, &scene, &camera, startHeight, endHeight,
-                           width, height, image);
-      startHeight = endHeight;
-      if (i >= threadCount - 2) {
-        endHeight = height;
-      } else {
-        endHeight += partition;
-      }
-    }
-    for (std::thread &t1 : threads) {
-      t1.join();
-    }
-    threads.clear();
-
-    // trace(&scene, &camera, 0, height, width, height, image);
+    /*
+        for (size_t i = 0; i < threadCount; i++) {
+          threads.emplace_back(trace, &scene, &camera, startHeight, endHeight,
+                               width, height, image);
+          startHeight = endHeight;
+          if (i >= threadCount - 2) {
+            endHeight = height;
+          } else {
+            endHeight += partition;
+          }
+        }
+        for (std::thread &t1 : threads) {
+          t1.join();
+        }
+        threads.clear();
+    */
+    trace(&scene, &camera, 0, height, width, height, image);
 
     write_ppm((camera.image_name).c_str(), image, width, height);
     delete[] image;

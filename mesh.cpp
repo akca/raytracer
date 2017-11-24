@@ -1,4 +1,7 @@
 #include "mesh.h"
+#include "face.h"
+#include "object.h"
+#include "vector3d.h"
 
 bool Mesh::intersects(const Vector3D &origin, const Vector3D &direction,
                       float &tmin, Vector3D &normal, bool isShadowRay) {
@@ -18,4 +21,10 @@ bool Mesh::intersects(const Vector3D &origin, const Vector3D &direction,
     return true;
   } else
     return false;
+}
+
+Vec2f Mesh::getTexturePoint(Vector3D &intersectPoint) {
+  Vec2f result = {0.0f, 0.0f};
+
+  return result;
 }
