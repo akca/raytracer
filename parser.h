@@ -1,9 +1,9 @@
 #ifndef __RAYTRACER__PARSER__
 #define __RAYTRACER__PARSER__
 
-#include "face.h"
 #include "object.h"
 #include "texture.h"
+#include "triangle.h"
 #include "utility.h"
 #include "vector3d.h"
 #include <string>
@@ -48,6 +48,7 @@ struct Scene {
   std::vector<Material> materials;
   std::vector<Texture> textures;
   std::vector<Vector3D> vertex_data;
+  std::vector<std::vector<Triangle *> *> meshes;
   std::vector<Object *> objects;
   std::vector<Vec3f> t_translation;
   std::vector<Vec4f> t_rotation;

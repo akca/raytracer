@@ -49,13 +49,3 @@ Vec2f Sphere::getTexturePoint(Vector3D &intersectPoint) {
 }
 
 void Sphere::translation(Vector3D &t) { center = center + t; }
-
-void Sphere::applyTransform() {
-  if (transformMatrix == NULL) {
-    return;
-  }
-  center.applyTransform(transformMatrix);
-  
-  delete[] transformMatrix;
-  transformMatrix = NULL;
-}

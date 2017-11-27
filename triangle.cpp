@@ -1,34 +1,45 @@
-#include "parser.h"
 #include "triangle.h"
 
 bool Triangle::intersects(const Vector3D &origin, const Vector3D &direction,
-                          float &t, Vector3D &normal, bool isShadowRay) {
-  if (face.intersects(origin, direction, t, isShadowRay)) {
-    normal = face.normal;
+                          float &tmin, Vector3D &norml, bool isShadowRay) {
+
+  Vector3D pVector = direction * edge2;
+  float det = edge1.dotProduct(pVector);
+
+  // do back-face culling if not shadow ray.
+  // otherwise ignore rays that orthogonal to triangle normal.
+  if ((!isShadowRay && det < 0.0f) || (isShadowRay && fabs(det) < 0.0f))
+    return false;
+
+  float inverseDet = 1 / det;
+  float u, v;
+
+  Vector3D tVector = origin - v1;
+  u = inverseDet * tVector.dotProduct(pVector);
+  if (u < 0.0f || u > 1.0f) {
+    return false;
+  }
+
+  Vector3D qVector = tVector * edge1;
+  v = inverseDet * direction.dotProduct(qVector);
+  if (v < 0.0f || u + v > 1.0f) {
+    return false;
+  }
+
+  float tmin_new = inverseDet * edge2.dotProduct(qVector);
+
+  if (tmin_new > 0.0f && tmin_new < tmin) {
+    tmin = tmin_new;
+    norml = normal;
     return true;
+  } else {
+    return false;
   }
-  return false;
 }
 
-Vec2f Triangle::getTexturePoint(Vector3D &intersectPoint) {
-  Vec2f result = {0.0f, 0.0f};
+Vec2f Triangle::getTexturePoint(Vector3D &) {
+  Vec2f tmp = {1, 1};
 
-  return result;
+  return tmp;
 }
-
-void Triangle::applyTransform() {
-  if (transformMatrix == NULL) {
-    return;
-  }
-  face.edge1 = face.edge1 + face.v1;
-  face.edge2 = face.edge2 + face.v1;
-  face.v1.applyTransform(transformMatrix);
-  face.edge1.applyTransform(transformMatrix);
-  face.edge2.applyTransform(transformMatrix);
-  face.edge1 = face.edge1 - face.v1;
-  face.edge2 = face.edge2 - face.v1;
-  face.normal = (face.edge1 * face.edge2).normalize();
-
-  delete[] transformMatrix;
-  transformMatrix = NULL;
-}
+void Triangle::applyTransform() {}

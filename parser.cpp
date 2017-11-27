@@ -1,10 +1,10 @@
-#include "face.h"
-#include "mesh.h"
 #include "parser.h"
 #include "sphere.h"
 #include "texture.h"
 #include "tinyxml2.h"
 #include "triangle.h"
+#include "utility.h"
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 
@@ -224,7 +224,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
   element = element->FirstChildElement("Mesh");
 
   while (element) {
-    std::vector<Face> faces;
+    std::vector<Triangle *> *faces = new std::vector<Triangle *>;
     int material_id;
     int texture_id = 0;
 
@@ -254,22 +254,38 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     while (!(stream >> v0_id).eof()) {
       stream >> v1_id >> v2_id;
 
-      Face face(vertex_data[v0_id - 1],
-                vertex_data[v1_id - 1] - vertex_data[v0_id - 1],
-                vertex_data[v2_id - 1] - vertex_data[v0_id - 1]);
+      Triangle *newobj =
+          new Triangle(vertex_data[v0_id - 1],
+                       vertex_data[v1_id - 1] - vertex_data[v0_id - 1],
+                       vertex_data[v2_id - 1] - vertex_data[v0_id - 1],
+                       material_id - 1, texture_id - 1);
 
-      faces.push_back(face);
+      faces->push_back(newobj);
+      objects.push_back(newobj);
+    }
+    meshes.push_back(faces);
+
+    // apply transformations if there exists
+    if (transformations != "") {
+      float *transformMatrix = createTransformMatrix(
+          t_translation, t_rotation, t_scaling, true, transformations);
+
+      for (auto &face : *faces) {
+        face->edge1 = face->edge1 + face->v1;
+        face->edge2 = face->edge2 + face->v1;
+        face->v1.applyTransform(transformMatrix);
+        face->edge1.applyTransform(transformMatrix);
+        face->edge2.applyTransform(transformMatrix);
+        face->edge1 = face->edge1 - face->v1;
+        face->edge2 = face->edge2 - face->v1;
+        face->normal = (face->edge1 * face->edge2).normalize();
+      }
+      delete[] transformMatrix;
     }
     stream.clear();
-    Mesh *newobj =
-        new Mesh(faces, material_id - 1, texture_id - 1, transformations);
-    newobj->createTransformMatrix(t_translation, t_rotation, t_scaling, true);
-    newobj->applyTransform();
-
-    objects.push_back(newobj);
-    // mesh.faces.clear();
     element = element->NextSiblingElement("Mesh");
   }
+
   stream.clear();
 
   // Get MeshInstances
@@ -277,7 +293,6 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
   element = element->FirstChildElement("MeshInstance");
 
   while (element) {
-    std::vector<Face> faces;
     int material_id;
     int texture_id = 0;
     int baseMeshId = std::stoi(element->Attribute("baseMeshId")) - 1;
@@ -294,22 +309,49 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     }
 
     child = element->FirstChildElement("Transformations");
+
+    float *transformMatrix = NULL;
+
     if (child) {
       transformations = child->GetText();
+      transformMatrix = createTransformMatrix(t_translation, t_rotation,
+                                              t_scaling, true, transformations);
     } else {
       transformations = "";
     }
+    // std::cout << "basemeshid: " << baseMeshId << " size: " << (meshes).size()
+    //           << " size: " << (*meshes[1]).size() << std::endl;
 
-    faces = static_cast<Mesh*>(objects[baseMeshId])->faces;
+    for (auto &face : *meshes[baseMeshId]) {
+      Vector3D v1 = (*face).v1;
+      Vector3D edge1 = (*face).edge1;
+      Vector3D edge2 = (*face).edge2;
 
-    Mesh *newobj =
-        new Mesh(faces, material_id - 1, texture_id - 1, transformations);
-    newobj->createTransformMatrix(t_translation, t_rotation, t_scaling, true);
-    newobj->applyTransform();
-
-    objects.push_back(newobj);
+      if (transformMatrix) {
+        edge1 = edge1 + v1;
+        edge2 = edge2 + v1;
+        v1.applyTransform(transformMatrix);
+        edge1.applyTransform(transformMatrix);
+        edge2.applyTransform(transformMatrix);
+        edge1 = edge1 - v1;
+        edge2 = edge2 - v1;
+      }
+      Triangle *newobj =
+          new Triangle(v1, edge1, edge2, material_id - 1, texture_id - 1);
+      objects.push_back(newobj);
+    }
+    if (transformMatrix) {
+      delete[] transformMatrix;
+      transformMatrix = NULL;
+    }
     element = element->NextSiblingElement("MeshInstance");
   }
+  // deallocate mesh vectors
+  for (auto &mesh : meshes) {
+    delete mesh;
+  }
+  meshes.clear();
+
   stream.clear();
 
   // Get Triangles
@@ -341,14 +383,27 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     } else {
       transformations = "";
     }
-    Face face(vertex_data[v0_id - 1],
-              vertex_data[v1_id - 1] - vertex_data[v0_id - 1],
-              vertex_data[v2_id - 1] - vertex_data[v0_id - 1]);
 
-    Triangle *newobj =
-        new Triangle(face, material_id - 1, texture_id - 1, transformations);
-    newobj->createTransformMatrix(t_translation, t_rotation, t_scaling, true);
-    newobj->applyTransform();
+    Triangle *newobj = new Triangle(
+        vertex_data[v0_id - 1], vertex_data[v1_id - 1] - vertex_data[v0_id - 1],
+        vertex_data[v2_id - 1] - vertex_data[v0_id - 1], material_id - 1,
+        texture_id - 1);
+    // apply transformations if there exists
+    if (transformations != "") {
+      float *transformMatrix = createTransformMatrix(
+          t_translation, t_rotation, t_scaling, true, transformations);
+
+      newobj->edge1 = newobj->edge1 + newobj->v1;
+      newobj->edge2 = newobj->edge2 + newobj->v1;
+      newobj->v1.applyTransform(transformMatrix);
+      newobj->edge1.applyTransform(transformMatrix);
+      newobj->edge2.applyTransform(transformMatrix);
+      newobj->edge1 = newobj->edge1 - newobj->v1;
+      newobj->edge2 = newobj->edge2 - newobj->v1;
+      newobj->normal = (newobj->edge1 * newobj->edge2).normalize();
+
+      delete[] transformMatrix;
+    }
 
     objects.push_back(newobj);
 
@@ -388,11 +443,17 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     } else {
       transformations = "";
     }
-    Sphere *newobj =
-        new Sphere(vertex_data[center_vertex_id - 1], radius, material_id - 1,
-                   texture_id - 1, transformations);
-    newobj->createTransformMatrix(t_translation, t_rotation, t_scaling, true);
-    newobj->applyTransform();
+    Sphere *newobj = new Sphere(vertex_data[center_vertex_id - 1], radius,
+                                material_id - 1, texture_id - 1);
+
+    if (transformations != "") {
+      float *transformMatrix = createTransformMatrix(
+          t_translation, t_rotation, t_scaling, true, transformations);
+
+      newobj->center.applyTransform(transformMatrix);
+
+      delete[] transformMatrix;
+    }
 
     objects.push_back(newobj);
     element = element->NextSiblingElement("Sphere");
