@@ -10,16 +10,20 @@ public:
   float r;
   float r2;
 
-  Sphere(Vector3D &c, float radius, int m, int t)
+  Sphere(Vector3D &c, float radius, int m, int t, std::string &tr)
       : center(c), r(radius), r2(r * r) {
     material_id = m;
     texture_id = t;
+    transformations = tr;
   }
 
   bool intersects(const Vector3D &origin, const Vector3D &direction, float &t,
                   Vector3D &normal, bool isShadowRay);
 
   Vec2f getTexturePoint(Vector3D &);
+  void translation(Vector3D &);
+
+  void applyTransform();
 
 };
 

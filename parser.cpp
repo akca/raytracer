@@ -11,6 +11,7 @@
 void parser::Scene::loadFromXml(const std::string &filepath) {
   tinyxml2::XMLDocument file;
   std::stringstream stream;
+  std::string transformations;
 
   auto res = file.LoadFile(filepath.c_str());
   if (res) {
@@ -19,6 +20,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
 
   auto root = file.FirstChild();
   if (!root) {
+    std::stringstream stream;
     throw std::runtime_error("Error: Root is not found.");
   }
 
@@ -188,14 +190,14 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
       stream << child->GetText() << std::endl;
       stream >> tmp.x >> tmp.y >> tmp.z;
       t_translation.push_back(tmp);
-      child = element->NextSiblingElement("Translation");
+      child = child->NextSiblingElement("Translation");
     }
     child = element->FirstChildElement("Scaling");
     while (child) {
       stream << child->GetText() << std::endl;
       stream >> tmp.x >> tmp.y >> tmp.z;
       t_scaling.push_back(tmp);
-      child = element->NextSiblingElement("Scaling");
+      child = child->NextSiblingElement("Scaling");
     }
     Vec4f tmp2;
     child = element->FirstChildElement("Rotation");
@@ -203,7 +205,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
       stream << child->GetText() << std::endl;
       stream >> tmp2.x >> tmp2.y >> tmp2.z >> tmp2.w;
       t_rotation.push_back(tmp2);
-      child = element->NextSiblingElement("Rotation");
+      child = child->NextSiblingElement("Rotation");
     }
   }
 
@@ -237,6 +239,13 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
       textures[texture_id - 1].loadImage();
     }
 
+    child = element->FirstChildElement("Transformations");
+    if (child) {
+      transformations = child->GetText();
+    } else {
+      transformations = "";
+    }
+
     child = element->FirstChildElement("Faces");
     stream << child->GetText() << std::endl;
 
@@ -252,10 +261,54 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
       faces.push_back(face);
     }
     stream.clear();
+    Mesh *newobj =
+        new Mesh(faces, material_id - 1, texture_id - 1, transformations);
+    newobj->createTransformMatrix(t_translation, t_rotation, t_scaling, true);
+    newobj->applyTransform();
 
-    objects.push_back(new Mesh(faces, material_id - 1, texture_id - 1));
+    objects.push_back(newobj);
     // mesh.faces.clear();
     element = element->NextSiblingElement("Mesh");
+  }
+  stream.clear();
+
+  // Get MeshInstances
+  element = root->FirstChildElement("Objects");
+  element = element->FirstChildElement("MeshInstance");
+
+  while (element) {
+    std::vector<Face> faces;
+    int material_id;
+    int texture_id = 0;
+    int baseMeshId = std::stoi(element->Attribute("baseMeshId")) - 1;
+
+    child = element->FirstChildElement("Material");
+    stream << child->GetText() << std::endl;
+    stream >> material_id;
+
+    child = element->FirstChildElement("Texture");
+    if (child) {
+      stream << child->GetText() << std::endl;
+      stream >> texture_id;
+      textures[texture_id - 1].loadImage();
+    }
+
+    child = element->FirstChildElement("Transformations");
+    if (child) {
+      transformations = child->GetText();
+    } else {
+      transformations = "";
+    }
+
+    faces = static_cast<Mesh*>(objects[baseMeshId])->faces;
+
+    Mesh *newobj =
+        new Mesh(faces, material_id - 1, texture_id - 1, transformations);
+    newobj->createTransformMatrix(t_translation, t_rotation, t_scaling, true);
+    newobj->applyTransform();
+
+    objects.push_back(newobj);
+    element = element->NextSiblingElement("MeshInstance");
   }
   stream.clear();
 
@@ -282,12 +335,22 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
       stream >> texture_id;
       textures[texture_id - 1].loadImage();
     }
-
+    child = element->FirstChildElement("Transformations");
+    if (child) {
+      transformations = child->GetText();
+    } else {
+      transformations = "";
+    }
     Face face(vertex_data[v0_id - 1],
               vertex_data[v1_id - 1] - vertex_data[v0_id - 1],
               vertex_data[v2_id - 1] - vertex_data[v0_id - 1]);
 
-    objects.push_back(new Triangle(face, material_id - 1, texture_id - 1));
+    Triangle *newobj =
+        new Triangle(face, material_id - 1, texture_id - 1, transformations);
+    newobj->createTransformMatrix(t_translation, t_rotation, t_scaling, true);
+    newobj->applyTransform();
+
+    objects.push_back(newobj);
 
     element = element->NextSiblingElement("Triangle");
   }
@@ -319,9 +382,19 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
       stream >> texture_id;
       textures[texture_id - 1].loadImage();
     }
+    child = element->FirstChildElement("Transformations");
+    if (child) {
+      transformations = child->GetText();
+    } else {
+      transformations = "";
+    }
+    Sphere *newobj =
+        new Sphere(vertex_data[center_vertex_id - 1], radius, material_id - 1,
+                   texture_id - 1, transformations);
+    newobj->createTransformMatrix(t_translation, t_rotation, t_scaling, true);
+    newobj->applyTransform();
 
-    objects.push_back(new Sphere(vertex_data[center_vertex_id - 1], radius,
-                                 material_id - 1, texture_id - 1));
+    objects.push_back(newobj);
     element = element->NextSiblingElement("Sphere");
   }
 }

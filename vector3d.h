@@ -9,72 +9,27 @@ public:
   float y;
   float z;
 
-  float getLength() const { return sqrtf(x * x + y * y + z * z); }
+  Vector3D();
+  Vector3D(const Vector3D &v);
+  Vector3D(float i, float j, float k);
+  float getLength() const;
+  Vector3D &normalize();
+  Vector3D inverse() const;
+  Vector3D operator-(const Vector3D &v) const;
+  Vector3D operator+(const Vector3D &v) const;
+  float dotProduct(const Vector3D &v) const;
+  Vector3D multiply(const Vector3D &v) const;
+  void applyTransform(const float *v);
+  float distance(const Vector3D &v) const;
 
-  Vector3D() {
-    x = 0;
-    y = 0;
-    z = 0;
-  }
-
-  Vector3D(const Vector3D &v) {
-    x = v.x;
-    y = v.y;
-    z = v.z;
-  }
-
-  Vector3D(float i, float j, float k) {
-    x = i;
-    y = j;
-    z = k;
-  }
-
-  Vector3D &normalize() {
-
-    float length = getLength();
-
-    x /= length;
-    y /= length;
-    z /= length;
-
-    return *this;
-  }
-
-  Vector3D inverse() const { return Vector3D(-x, -y, -z); }
-
-  Vector3D operator-(const Vector3D &v) const {
-    return Vector3D(x - v.x, y - v.y, z - v.z);
-  }
-
-  Vector3D operator+(const Vector3D &v) const {
-    return Vector3D(x + v.x, y + v.y, z + v.z);
-  }
   // Divide by constant
-  Vector3D operator/(float cons) const {
-    return Vector3D(x / cons, y / cons, z / cons);
-  }
+  Vector3D operator/(float cons) const;
 
   // Multiply by constant
-  Vector3D operator*(float cons) const {
-    return Vector3D(x * cons, y * cons, z * cons);
-  }
+  Vector3D operator*(float cons) const;
 
   // Vector cross product
-  Vector3D operator*(const Vector3D &v) const {
-    return Vector3D(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
-  }
-
-  float dotProduct(const Vector3D &v) const {
-    return x * v.x + y * v.y + z * v.z;
-  }
-
-  Vector3D multiply(const Vector3D &v) const {
-    return Vector3D(x * v.x, y * v.y, z * v.z);
-  }
-
-  float distance(const Vector3D &v) const {
-    return sqrtf(pow((x - v.x), 2) + pow((y - v.y), 2) + pow((z - v.z), 2));
-  }
+  Vector3D operator*(const Vector3D &v) const;
 };
 
 #endif

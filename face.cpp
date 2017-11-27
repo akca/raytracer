@@ -1,7 +1,7 @@
 #include "face.h"
 
 bool Face::intersects(const Vector3D &origin, const Vector3D &direction,
-                float &tmin, bool isShadowRay) {
+                      float &tmin, bool isShadowRay) {
 
   Vector3D pVector = direction * edge2;
   float det = edge1.dotProduct(pVector);

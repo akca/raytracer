@@ -10,7 +10,7 @@ public:
   Vector3D edge1;
   Vector3D edge2;
   Vector3D normal;
-  
+
   Face() {}
 
   Face(Vector3D &vt1, Vector3D vt2, Vector3D vt3)
@@ -18,6 +18,7 @@ public:
 
   bool intersects(const Vector3D &origin, const Vector3D &direction,
                   float &tmin, bool isShadowRay);
+
 };
 
 #endif

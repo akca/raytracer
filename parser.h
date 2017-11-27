@@ -2,9 +2,9 @@
 #define __RAYTRACER__PARSER__
 
 #include "face.h"
-#include "utility.h"
 #include "object.h"
 #include "texture.h"
+#include "utility.h"
 #include "vector3d.h"
 #include <string>
 #include <vector>

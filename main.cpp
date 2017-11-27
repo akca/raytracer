@@ -57,6 +57,7 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction,
       }
 
       if (!underShadow) {
+        bool isReplaceAll = false;
 
         float costheta_diff = std::max(float(0), wi.dotProduct(normal));
         float distance2 = pow(lightDistance, 2);
@@ -71,12 +72,12 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction,
 
           DecalMode decalMode = texture.getDecalMode();
           Vec2f texturePoint = intersectObject->getTexturePoint(intersectPoint);
-
+          // TODO
+          // TODO TEXCOORDDATA
+          // TODO
           Vector3D textureColor =
               texture.getColor(texturePoint, texture.getInterpolation());
-          /*  if (texture.getWidth() == 1280)
-              std::cout << texturePoint.x << " " << texturePoint.y << std::endl;
-  */
+
           switch (decalMode) {
           case REPLACE_KD:
             pixelColor =
@@ -86,27 +87,31 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction,
           case BLEND_KD:
             pixelColor =
                 pixelColor +
-                ((kDiffuse / 256 + textureColor) * 0.5f * costheta_diff)
+                ((kDiffuse + textureColor / 256) * 0.5f * costheta_diff)
                     .multiply(light.intensity / distance2);
 
             break;
           case REPLACE_ALL:
-            pixelColor = pixelColor + textureColor;
+            pixelColor = textureColor;
+            isReplaceAll = true;
             break;
           }
         }
-        Vector3D halfVector =
-            (wi + direction.inverse()).normalize(); // for specular
+        if (!isReplaceAll) {
+          Vector3D halfVector =
+              (wi + direction.inverse()).normalize(); // for specular
 
-        float costheta_spec = std::max(float(0), normal.dotProduct(halfVector));
+          float costheta_spec =
+              std::max(float(0), normal.dotProduct(halfVector));
 
-        // specular shading
-        pixelColor =
-            pixelColor +
-            (kSpecular *
-             pow(costheta_spec,
-                 scene.materials[intersectObject->material_id].phong_exponent))
-                .multiply(light.intensity / distance2);
+          // specular shading
+          pixelColor =
+              pixelColor +
+              (kSpecular *
+               pow(costheta_spec, scene.materials[intersectObject->material_id]
+                                      .phong_exponent))
+                  .multiply(light.intensity / distance2);
+        }
       }
     }
 
@@ -187,23 +192,23 @@ int main(int argc, char *argv[]) {
     int startHeight = 0;
     int endHeight = partition;
     std::vector<thread> threads;
-    /*
-        for (size_t i = 0; i < threadCount; i++) {
-          threads.emplace_back(trace, &scene, &camera, startHeight, endHeight,
-                               width, height, image);
-          startHeight = endHeight;
-          if (i >= threadCount - 2) {
-            endHeight = height;
-          } else {
-            endHeight += partition;
-          }
-        }
-        for (std::thread &t1 : threads) {
-          t1.join();
-        }
-        threads.clear();
-    */
-    trace(&scene, &camera, 0, height, width, height, image);
+
+    for (size_t i = 0; i < threadCount; i++) {
+      threads.emplace_back(trace, &scene, &camera, startHeight, endHeight,
+                           width, height, image);
+      startHeight = endHeight;
+      if (i >= threadCount - 2) {
+        endHeight = height;
+      } else {
+        endHeight += partition;
+      }
+    }
+    for (std::thread &t1 : threads) {
+      t1.join();
+    }
+    threads.clear();
+
+    // trace(&scene, &camera, 0, height, width, height, image);
 
     write_ppm((camera.image_name).c_str(), image, width, height);
     delete[] image;

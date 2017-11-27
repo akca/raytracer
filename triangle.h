@@ -9,9 +9,10 @@ class Triangle : public Object {
 public:
   Face face;
 
-  Triangle(Face &f, int m, int t) : face(f) {
+  Triangle(Face &f, int m, int t, std::string &tr) : face(f) {
     material_id = m;
     texture_id = t;
+    transformations = tr;
   }
 
   bool intersects(const Vector3D &origin, const Vector3D &direction, float &t,
@@ -20,6 +21,8 @@ public:
   Vector3D &getNormalAt(const Vector3D &hitPoint) { return face.normal; }
 
   Vec2f getTexturePoint(Vector3D &);
+  void applyTransform();
+
 };
 
 #endif

@@ -21,11 +21,18 @@ bool Sphere::intersects(const Vector3D &origin, const Vector3D &direction,
   if (t1 < 0)
     return false; // both roots are negative, no intersection
 
+  float tmin;
   if (t0 < 0) {
-    t = t1; // if t0 is negative, t1 should be the visible param.
+    tmin = t1; // if t0 is negative, t1 should be the visible param.
   } else {
-    t = t0;
+    tmin = t0;
   }
+
+  // if a closer object is already there, this object is not visible
+  if (tmin > t)
+    return false;
+  else
+    t = tmin;
 
   // TODO HITPOINT RECALCULATED. POSSIBLE OPTIMIZE
   normal = (L + direction * t).normalize();
@@ -37,6 +44,18 @@ Vec2f Sphere::getTexturePoint(Vector3D &intersectPoint) {
   Vec2f result;
   Vector3D relative = intersectPoint - center;
   result.x = -atan2(relative.z, relative.x) / (2 * M_PI) + 0.5f; // u
-  result.y = acos(relative.y / r) / M_PI; // v
+  result.y = acos(relative.y / r) / M_PI;                        // v
   return result;
+}
+
+void Sphere::translation(Vector3D &t) { center = center + t; }
+
+void Sphere::applyTransform() {
+  if (transformMatrix == NULL) {
+    return;
+  }
+  center.applyTransform(transformMatrix);
+  
+  delete[] transformMatrix;
+  transformMatrix = NULL;
 }

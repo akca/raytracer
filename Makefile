@@ -2,9 +2,14 @@ compile:
 	g++ *.cpp -o raytracer -Wall -pthread -ljpeg -std=c++17 -O3 -march=native
 debug:
 	g++ *.cpp -o raytracer -Wall -pthread -ljpeg -std=c++17 -g
-all: simple simple_shading simple_reflectance cornellbox mirror_spheres bunny dragon_bg sciencetree sciencetree_wp dragon_lowres horse_and_mug
 clean:
 	rm raytracer *.ppm
+
+all: hw1 hw2
+
+hw1: simple simple_shading simple_reflectance cornellbox mirror_spheres bunny dragon_bg sciencetree sciencetree_wp dragon_lowres horse_and_mug
+hw2: simple_transform skybox spheres_transform ellipsoids_texture_bilinear ellipsoids_texture_nearest horse_instanced horse
+
 simple:
 	./raytracer hw1_sample_scenes/simple.xml
 simple_shading:

@@ -83,12 +83,6 @@ Vector3D Texture::getColor(Vec2f &texturePoint, Interpolation interpolation) {
                 ((1 - dx) * dy) +
             Vector3D(image[index2 + 3], image[index2 + 4], image[index2 + 5]) *
                 (dx * dy);
-    /*
-        fetch(p, q).(1 – dx).(1 – dy) +
-        fetch(p + 1, q).(dx).(1 – dy) +
-        fetch(p, q + 1).(1 – dx).(dy) +
-        fetch(p + 1, q + 1).(dx).(dy);*/
-
     break;
   }
   return color;
