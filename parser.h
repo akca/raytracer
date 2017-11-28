@@ -48,6 +48,7 @@ struct Scene {
   std::vector<Material> materials;
   std::vector<Texture> textures;
   std::vector<Vector3D> vertex_data;
+  std::vector<Vec2f> texCoordData;
   std::vector<std::vector<Triangle *> *> meshes;
   std::vector<Object *> objects;
   std::vector<Vec3f> t_translation;

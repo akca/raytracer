@@ -6,17 +6,18 @@
 #include <thread>
 #include <vector>
 
-const float FLOAT_MAX = std::numeric_limits<float>::max();
-
 Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction,
                int recursionDepth) {
 
   Object *intersectObject = NULL;
-  float tmin = FLOAT_MAX;
+  float tmin = std::numeric_limits<float>::max();
   Vector3D normal, pixelColor;
+  Vector3D intersectPoint;
+  Vec2f texCoord;
 
   for (auto &object : scene.objects) {
-    if (object->intersects(rayOrigin, direction, tmin, normal, false)) {
+    if (object->intersects(rayOrigin, direction, tmin, intersectPoint, normal,
+                           false, texCoord)) {
       intersectObject = object;
     }
   }
@@ -24,7 +25,7 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction,
   // if intersection with an object found
   if (intersectObject != NULL) {
 
-    Vector3D intersectPoint = rayOrigin + direction * tmin;
+    intersectPoint = rayOrigin + direction * tmin;
 
     Vector3D &kDiffuse = scene.materials[intersectObject->material_id].diffuse;
     Vector3D &kAmbient = scene.materials[intersectObject->material_id].ambient;
@@ -47,10 +48,12 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction,
       float stmin = lightDistance;
       bool underShadow = false;
       Vector3D tmp_vec;
+      Vec2f tmp_vec2;
 
       // shadow ray
       for (auto &sobject : scene.objects) {
-        if (sobject->intersects(shadowRayOrigin, wi, stmin, tmp_vec, true)) {
+        if (sobject->intersects(shadowRayOrigin, wi, stmin, tmp_vec, tmp_vec,
+                                true, tmp_vec2)) {
           underShadow = true;
           break;
         }
@@ -68,15 +71,13 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction,
               pixelColor +
               (kDiffuse * costheta_diff).multiply(light.intensity / distance2);
         } else {
+          // if the object have texture
           Texture &texture = scene.textures[intersectObject->texture_id];
 
           DecalMode decalMode = texture.getDecalMode();
-          Vec2f texturePoint = intersectObject->getTexturePoint(intersectPoint);
-          // TODO
-          // TODO TEXCOORDDATA
-          // TODO
+
           Vector3D textureColor =
-              texture.getColor(texturePoint, texture.getInterpolation());
+              texture.getColor(texCoord, texture.getInterpolation());
 
           switch (decalMode) {
           case REPLACE_KD:
@@ -97,7 +98,9 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction,
             break;
           }
         }
+
         if (!isReplaceAll) {
+
           Vector3D halfVector =
               (wi + direction.inverse()).normalize(); // for specular
 

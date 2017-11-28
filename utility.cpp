@@ -63,7 +63,7 @@ void zeroFill(float matrix[]) {
 
 float *createTransformMatrix(std::vector<Vec3f> &t_translation,
                              std::vector<Vec4f> &t_rotation,
-                             std::vector<Vec3f> &t_scaling, bool fillZero,
+                             std::vector<Vec3f> &t_scaling, bool inverse,
                              std::string transformations) {
 
   if (transformations == "")
@@ -100,10 +100,15 @@ float *createTransformMatrix(std::vector<Vec3f> &t_translation,
       newMatrix[1 * 4 + 1] = 1;
       newMatrix[2 * 4 + 2] = 1;
       newMatrix[3 * 4 + 3] = 1;
-      newMatrix[0 * 4 + 3] = t_translation[tid].x;
-      newMatrix[1 * 4 + 3] = t_translation[tid].y;
-      newMatrix[2 * 4 + 3] = t_translation[tid].z;
-
+      if (inverse) {
+        newMatrix[0 * 4 + 3] = -t_translation[tid].x;
+        newMatrix[1 * 4 + 3] = -t_translation[tid].y;
+        newMatrix[2 * 4 + 3] = -t_translation[tid].z;
+      } else {
+        newMatrix[0 * 4 + 3] = t_translation[tid].x;
+        newMatrix[1 * 4 + 3] = t_translation[tid].y;
+        newMatrix[2 * 4 + 3] = t_translation[tid].z;
+      }
       // rotation
     } else if (ttype == 'r') {
 
@@ -123,7 +128,9 @@ float *createTransformMatrix(std::vector<Vec3f> &t_translation,
         return NULL;
       }
       Vector3D w = u * v;
-      float angle = t_rotation[tid].x * M_PI / 180.0f;
+      float angle;
+
+      angle = t_rotation[tid].x * M_PI / 180.0f;
 
       float M[16]{u.x, u.y, u.z, 0, v.x, v.y, v.z, 0,
                   w.x, w.y, w.z, 0, 0,   0,   0,   1};
@@ -133,8 +140,12 @@ float *createTransformMatrix(std::vector<Vec3f> &t_translation,
 
       float cosa = cos(angle);
       float sina = sin(angle);
-
       float Rx[16]{1, 0, 0, 0, 0, cosa, -sina, 0, 0, sina, cosa, 0, 0, 0, 0, 1};
+
+      if (inverse) {
+        Rx[6] *= -1;
+        Rx[9] *= -1;
+      }
 
       mmul44(Minv, Rx, newMatrix);
       mmul44(newMatrix, M, newMatrix);
@@ -143,26 +154,37 @@ float *createTransformMatrix(std::vector<Vec3f> &t_translation,
     } else if (ttype == 's') {
 
       newMatrix[3 * 4 + 3] = 1;
-      newMatrix[0] = t_scaling[tid].x;
-      newMatrix[1 * 4 + 1] = t_scaling[tid].y;
-      newMatrix[2 * 4 + 2] = t_scaling[tid].z;
+
+      if (inverse) {
+        newMatrix[0] = 1.0f / t_scaling[tid].x;
+        newMatrix[1 * 4 + 1] = 1.0f / t_scaling[tid].y;
+        newMatrix[2 * 4 + 2] = 1.0f / t_scaling[tid].z;
+      } else {
+        newMatrix[0] = t_scaling[tid].x;
+        newMatrix[1 * 4 + 1] = t_scaling[tid].y;
+        newMatrix[2 * 4 + 2] = t_scaling[tid].z;
+      }
     }
 
-    if (i == 0 && fillZero) {
+    if (i == 0) {
       std::copy(newMatrix, newMatrix + 16, transformMatrix);
     } else {
-      mmul44(newMatrix, transformMatrix, transformMatrix);
+      if (inverse) {
+        mmul44(transformMatrix, newMatrix, transformMatrix);
+      } else {
+        mmul44(newMatrix, transformMatrix, transformMatrix);
+      }
     }
     i++;
   }
   /*
-    for (int x = 0; x < 4; x++) {
-      for (int y = 0; y < 4; y++) {
-        std::cout << *(transformMatrix + 4 * x + y) << " ";
+      for (int x = 0; x < 4; x++) {
+        for (int y = 0; y < 4; y++) {
+          std::cout << *(transformMatrix + 4 * x + y) << " ";
+        }
+        std::cout << "\n";
       }
       std::cout << "\n";
-    }
-    std::cout << "\n";*/
-
+  */
   return transformMatrix;
 }

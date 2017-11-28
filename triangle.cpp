@@ -1,7 +1,8 @@
 #include "triangle.h"
 
 bool Triangle::intersects(const Vector3D &origin, const Vector3D &direction,
-                          float &tmin, Vector3D &norml, bool isShadowRay) {
+                          float &tmin, Vector3D &intersectPoint,
+                          Vector3D &norml, bool isShadowRay, Vec2f &texCoord) {
 
   Vector3D pVector = direction * edge2;
   float det = edge1.dotProduct(pVector);
@@ -16,13 +17,13 @@ bool Triangle::intersects(const Vector3D &origin, const Vector3D &direction,
 
   Vector3D tVector = origin - v1;
   u = inverseDet * tVector.dotProduct(pVector);
-  if (u < 0.0f || u > 1.0f) {
+  if (u < -1e-7 || u > 1.00001) {
     return false;
   }
 
   Vector3D qVector = tVector * edge1;
   v = inverseDet * direction.dotProduct(qVector);
-  if (v < 0.0f || u + v > 1.0f) {
+  if (v < -1e-7 || u + v > 1.00001) {
     return false;
   }
 
@@ -30,16 +31,19 @@ bool Triangle::intersects(const Vector3D &origin, const Vector3D &direction,
 
   if (tmin_new > 0.0f && tmin_new < tmin) {
     tmin = tmin_new;
-    norml = normal;
+
+    if (!isShadowRay) {
+      norml = normal;
+      if (texture_id != -1) {
+        texCoord = {texCoord1.x + u * (texCoord2.x - texCoord1.x) +
+                        v * (texCoord3.x - texCoord1.x),
+                    texCoord1.y + u * (texCoord2.y - texCoord1.y) +
+                        v * (texCoord3.y - texCoord1.y)};
+      }
+    }
+
     return true;
   } else {
     return false;
   }
 }
-
-Vec2f Triangle::getTexturePoint(Vector3D &) {
-  Vec2f tmp = {1, 1};
-
-  return tmp;
-}
-void Triangle::applyTransform() {}

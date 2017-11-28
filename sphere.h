@@ -9,6 +9,9 @@ public:
   Vector3D center; // center of the sphere
   float r;
   float r2;
+  float *transformMatrix = NULL;
+  float *invTransformMatrix = NULL;
+  float invTransposeTransformMatrix[16];
 
   Sphere(Vector3D &c, float radius, int m, int t)
       : center(c), r(radius), r2(r * r) {
@@ -17,10 +20,8 @@ public:
   }
 
   bool intersects(const Vector3D &origin, const Vector3D &direction, float &t,
-                  Vector3D &normal, bool isShadowRay);
-
-  Vec2f getTexturePoint(Vector3D &);
-  void translation(Vector3D &);
+                  Vector3D &intersectPoint, Vector3D &normal, bool isShadowRay,
+                  Vec2f &texCoordData);
 };
 
 #endif

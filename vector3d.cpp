@@ -1,7 +1,5 @@
 #include "vector3d.h"
-
 #include <cmath>
-#include <iostream>
 
 float Vector3D::getLength() const { return sqrtf(x * x + y * y + z * z); }
 
@@ -70,15 +68,22 @@ float Vector3D::distance(const Vector3D &v) const {
   return sqrtf(pow((x - v.x), 2) + pow((y - v.y), 2) + pow((z - v.z), 2));
 }
 
-void Vector3D::applyTransform(const float *v) {
-  float newX = v[0] * x + v[1] * y + v[2] * z + v[3];
-  float newY = v[4] * x + v[5] * y + v[6] * z + v[7];
-  float newZ = v[8] * x + v[9] * y + v[10] * z + v[11];
-/*
-  std::cout << x << " " << y << " " << z << std::endl;
-  std::cout << newX << " " << newY << " " << newZ << std::endl;
-  std::cout << std::endl;
-*/
+void Vector3D::applyTransform(const float *v, bool isVector) {
+
+  float newX = v[0] * x + v[1] * y + v[2] * z;
+  float newY = v[4] * x + v[5] * y + v[6] * z;
+  float newZ = v[8] * x + v[9] * y + v[10] * z;
+
+  if (!isVector) {
+    newX += v[3];
+    newY += v[7];
+    newZ += v[11];
+  }
+  /*
+    std::cout << x << " " << y << " " << z << std::endl;
+    std::cout << newX << " " << newY << " " << newZ << std::endl;
+    std::cout << std::endl;
+  */
   x = newX;
   y = newY;
   z = newZ;

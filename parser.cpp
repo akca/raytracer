@@ -4,7 +4,6 @@
 #include "tinyxml2.h"
 #include "triangle.h"
 #include "utility.h"
-#include <iostream>
 #include <sstream>
 #include <stdexcept>
 
@@ -181,6 +180,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
       element = element->NextSiblingElement("Texture");
     }
   }
+
   // Get Transformations
   element = root->FirstChildElement("Transformations");
   if (element) {
@@ -211,20 +211,33 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
 
   // Get VertexData
   element = root->FirstChildElement("VertexData");
-  stream << element->GetText() << std::endl;
-  Vector3D vertex;
-  while (!(stream >> vertex.x).eof()) {
-    stream >> vertex.y >> vertex.z;
-    vertex_data.push_back(vertex);
+  if (element) {
+    stream << element->GetText() << std::endl;
+    Vector3D vertex;
+    while (!(stream >> vertex.x).eof()) {
+      stream >> vertex.y >> vertex.z;
+      vertex_data.push_back(vertex);
+    }
+    stream.clear();
   }
-  stream.clear();
+
+  // Get TexCoordData
+  element = root->FirstChildElement("TexCoordData");
+  if (element) {
+    stream << element->GetText() << std::endl;
+    Vec2f coord;
+    while (!(stream >> coord.x).eof()) {
+      stream >> coord.y;
+      texCoordData.push_back(coord);
+    }
+    stream.clear();
+  }
 
   // Get Meshes
   element = root->FirstChildElement("Objects");
   element = element->FirstChildElement("Mesh");
 
   while (element) {
-    std::vector<Triangle *> *faces = new std::vector<Triangle *>;
     int material_id;
     int texture_id = 0;
 
@@ -250,38 +263,45 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     stream << child->GetText() << std::endl;
 
     int v0_id, v1_id, v2_id;
+    std::vector<Triangle *> *faces = new std::vector<Triangle *>;
 
     while (!(stream >> v0_id).eof()) {
       stream >> v1_id >> v2_id;
+      Vec2f texCoord1, texCoord2, texCoord3;
+
+      if (texture_id != 0) {
+        // texcoords
+        texCoord1 = {texCoordData[v0_id - 1].x, texCoordData[v0_id - 1].y};
+        texCoord2 = {texCoordData[v1_id - 1].x, texCoordData[v1_id - 1].y};
+        texCoord3 = {texCoordData[v2_id - 1].x, texCoordData[v2_id - 1].y};
+      }
+
+      Vector3D v1 = vertex_data[v0_id - 1];
+      Vector3D v2 = vertex_data[v1_id - 1];
+      Vector3D v3 = vertex_data[v2_id - 1];
+
+      // apply transformations if there exists
+      if (transformations != "") {
+
+        float *transformMatrix = createTransformMatrix(
+            t_translation, t_rotation, t_scaling, false, transformations);
+
+        v1.applyTransform(transformMatrix, false);
+        v2.applyTransform(transformMatrix, false);
+        v3.applyTransform(transformMatrix, false);
+
+        delete[] transformMatrix;
+      }
 
       Triangle *newobj =
-          new Triangle(vertex_data[v0_id - 1],
-                       vertex_data[v1_id - 1] - vertex_data[v0_id - 1],
-                       vertex_data[v2_id - 1] - vertex_data[v0_id - 1],
-                       material_id - 1, texture_id - 1);
+          new Triangle(v1, v2 - v1, v3 - v1, material_id - 1, texture_id - 1,
+                       texCoord1, texCoord2, texCoord3);
 
       faces->push_back(newobj);
       objects.push_back(newobj);
     }
     meshes.push_back(faces);
 
-    // apply transformations if there exists
-    if (transformations != "") {
-      float *transformMatrix = createTransformMatrix(
-          t_translation, t_rotation, t_scaling, true, transformations);
-
-      for (auto &face : *faces) {
-        face->edge1 = face->edge1 + face->v1;
-        face->edge2 = face->edge2 + face->v1;
-        face->v1.applyTransform(transformMatrix);
-        face->edge1.applyTransform(transformMatrix);
-        face->edge2.applyTransform(transformMatrix);
-        face->edge1 = face->edge1 - face->v1;
-        face->edge2 = face->edge2 - face->v1;
-        face->normal = (face->edge1 * face->edge2).normalize();
-      }
-      delete[] transformMatrix;
-    }
     stream.clear();
     element = element->NextSiblingElement("Mesh");
   }
@@ -314,13 +334,11 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
 
     if (child) {
       transformations = child->GetText();
-      transformMatrix = createTransformMatrix(t_translation, t_rotation,
-                                              t_scaling, true, transformations);
+      transformMatrix = createTransformMatrix(
+          t_translation, t_rotation, t_scaling, false, transformations);
     } else {
       transformations = "";
     }
-    // std::cout << "basemeshid: " << baseMeshId << " size: " << (meshes).size()
-    //           << " size: " << (*meshes[1]).size() << std::endl;
 
     for (auto &face : *meshes[baseMeshId]) {
       Vector3D v1 = (*face).v1;
@@ -330,14 +348,15 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
       if (transformMatrix) {
         edge1 = edge1 + v1;
         edge2 = edge2 + v1;
-        v1.applyTransform(transformMatrix);
-        edge1.applyTransform(transformMatrix);
-        edge2.applyTransform(transformMatrix);
+        v1.applyTransform(transformMatrix, false);
+        edge1.applyTransform(transformMatrix, false);
+        edge2.applyTransform(transformMatrix, false);
         edge1 = edge1 - v1;
         edge2 = edge2 - v1;
       }
       Triangle *newobj =
-          new Triangle(v1, edge1, edge2, material_id - 1, texture_id - 1);
+          new Triangle(v1, edge1, edge2, material_id - 1, texture_id - 1,
+                       (*face).texCoord1, (*face).texCoord2, (*face).texCoord3);
       objects.push_back(newobj);
     }
     if (transformMatrix) {
@@ -346,6 +365,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     }
     element = element->NextSiblingElement("MeshInstance");
   }
+
   // deallocate mesh vectors
   for (auto &mesh : meshes) {
     delete mesh;
@@ -384,20 +404,29 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
       transformations = "";
     }
 
+    Vec2f texCoord1, texCoord2, texCoord3;
+
+    if (texture_id != 0) {
+      // texcoords
+      texCoord1 = {texCoordData[v0_id - 1].x, texCoordData[v0_id - 1].y};
+      texCoord2 = {texCoordData[v1_id - 1].x, texCoordData[v1_id - 1].y};
+      texCoord3 = {texCoordData[v2_id - 1].x, texCoordData[v2_id - 1].y};
+    }
     Triangle *newobj = new Triangle(
         vertex_data[v0_id - 1], vertex_data[v1_id - 1] - vertex_data[v0_id - 1],
         vertex_data[v2_id - 1] - vertex_data[v0_id - 1], material_id - 1,
-        texture_id - 1);
+        texture_id - 1, texCoord1, texCoord2, texCoord3);
+
     // apply transformations if there exists
     if (transformations != "") {
       float *transformMatrix = createTransformMatrix(
-          t_translation, t_rotation, t_scaling, true, transformations);
+          t_translation, t_rotation, t_scaling, false, transformations);
 
       newobj->edge1 = newobj->edge1 + newobj->v1;
       newobj->edge2 = newobj->edge2 + newobj->v1;
-      newobj->v1.applyTransform(transformMatrix);
-      newobj->edge1.applyTransform(transformMatrix);
-      newobj->edge2.applyTransform(transformMatrix);
+      newobj->v1.applyTransform(transformMatrix, false);
+      newobj->edge1.applyTransform(transformMatrix, false);
+      newobj->edge2.applyTransform(transformMatrix, false);
       newobj->edge1 = newobj->edge1 - newobj->v1;
       newobj->edge2 = newobj->edge2 - newobj->v1;
       newobj->normal = (newobj->edge1 * newobj->edge2).normalize();
@@ -447,12 +476,17 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
                                 material_id - 1, texture_id - 1);
 
     if (transformations != "") {
-      float *transformMatrix = createTransformMatrix(
+      newobj->transformMatrix = createTransformMatrix(
+          t_translation, t_rotation, t_scaling, false, transformations);
+      newobj->invTransformMatrix = createTransformMatrix(
           t_translation, t_rotation, t_scaling, true, transformations);
 
-      newobj->center.applyTransform(transformMatrix);
-
-      delete[] transformMatrix;
+      for (int x = 0; x < 4; x++) {
+        for (int y = 0; y < 4; y++) {
+          newobj->invTransposeTransformMatrix[x + 4 * y] =
+              newobj->invTransformMatrix[y + 4 * x];
+        }
+      }
     }
 
     objects.push_back(newobj);

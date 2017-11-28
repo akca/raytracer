@@ -1,13 +1,21 @@
 #include "sphere.h"
 #include <algorithm>
-#include <iostream>
 
 bool Sphere::intersects(const Vector3D &origin, const Vector3D &direction,
-                        float &t, Vector3D &normal, bool isShadowRay) {
+                        float &t, Vector3D &intersectPoint, Vector3D &normal,
+                        bool isShadowRay, Vec2f &texCoord) {
 
-  Vector3D L = origin - center;
+  Vector3D newOrigin = origin;
+  Vector3D newDirection = direction;
 
-  float b = 2 * direction.dotProduct(L);
+  if (invTransformMatrix) {
+    newDirection.applyTransform(invTransformMatrix, true);
+    newDirection.normalize();
+    newOrigin.applyTransform(invTransformMatrix, false);
+  }
+  Vector3D L = newOrigin - center;
+
+  float b = 2 * newDirection.dotProduct(L);
   float c = L.dotProduct(L) - r2;
 
   float t0, t1; // these will become roots
@@ -31,21 +39,27 @@ bool Sphere::intersects(const Vector3D &origin, const Vector3D &direction,
   // if a closer object is already there, this object is not visible
   if (tmin > t)
     return false;
-  else
+  else {
     t = tmin;
 
-  // TODO HITPOINT RECALCULATED. POSSIBLE OPTIMIZE
-  normal = (L + direction * t).normalize();
+    intersectPoint = newOrigin + newDirection * t;
 
-  return true;
+    if (!isShadowRay) {
+
+      normal = (intersectPoint - center).normalize();
+
+      if (texture_id != -1) {
+        Vector3D relative = intersectPoint - center;
+        texCoord.x = -atan2(relative.z, relative.x) / (2 * M_PI) + 0.5f; // u
+        texCoord.y = acos(relative.y / r) / M_PI;                        // v
+      }
+
+      if (transformMatrix) {
+        intersectPoint.applyTransform(transformMatrix, false);
+        normal.applyTransform(invTransposeTransformMatrix, true);
+        normal.normalize();
+      }
+    }
+    return true;
+  }
 }
-
-Vec2f Sphere::getTexturePoint(Vector3D &intersectPoint) {
-  Vec2f result;
-  Vector3D relative = intersectPoint - center;
-  result.x = -atan2(relative.z, relative.x) / (2 * M_PI) + 0.5f; // u
-  result.y = acos(relative.y / r) / M_PI;                        // v
-  return result;
-}
-
-void Sphere::translation(Vector3D &t) { center = center + t; }

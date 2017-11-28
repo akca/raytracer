@@ -9,7 +9,7 @@ struct Vec3i {
 };
 
 struct Vec2f {
-  float x, y;
+  float x = 0, y = 0;
 };
 
 struct Vec3f {
@@ -31,7 +31,7 @@ void zeroFill(float matrix[]);
 
 float *createTransformMatrix(std::vector<Vec3f> &t_translation,
                              std::vector<Vec4f> &t_rotation,
-                             std::vector<Vec3f> &t_scaling, bool fillZero,
+                             std::vector<Vec3f> &t_scaling, bool inverse,
                              std::string transformations);
 
 #endif

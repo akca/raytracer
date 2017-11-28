@@ -19,7 +19,7 @@ public:
   Vector3D operator+(const Vector3D &v) const;
   float dotProduct(const Vector3D &v) const;
   Vector3D multiply(const Vector3D &v) const;
-  void applyTransform(const float *v);
+  void applyTransform(const float *v, bool isVector);
   float distance(const Vector3D &v) const;
 
   // Divide by constant

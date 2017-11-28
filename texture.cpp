@@ -1,6 +1,5 @@
 #include "jpeg.h"
 #include "texture.h"
-#include <iostream>
 
 Texture::Texture(std::string &name, std::string &ip, std::string &dm,
                  std::string &ap) {
