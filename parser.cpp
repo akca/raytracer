@@ -253,8 +253,13 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     }
 
     child = element->FirstChildElement("Transformations");
+
+    float *transformMatrix = NULL;
     if (child) {
       transformations = child->GetText();
+      transformMatrix = createTransformMatrix(
+          t_translation, t_rotation, t_scaling, false, transformations);
+
     } else {
       transformations = "";
     }
@@ -281,17 +286,14 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
       Vector3D v3 = vertex_data[v2_id - 1];
 
       // apply transformations if there exists
-      if (transformations != "") {
-
-        float *transformMatrix = createTransformMatrix(
-            t_translation, t_rotation, t_scaling, false, transformations);
+      if (transformMatrix) {
 
         v1.applyTransform(transformMatrix, false);
         v2.applyTransform(transformMatrix, false);
         v3.applyTransform(transformMatrix, false);
-
-        delete[] transformMatrix;
       }
+      delete[] transformMatrix;
+      transformMatrix = NULL;
 
       Triangle *newobj =
           new Triangle(v1, v2 - v1, v3 - v1, material_id - 1, texture_id - 1,
