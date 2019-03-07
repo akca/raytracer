@@ -1,3 +1,5 @@
 raytracer
 *.ppm
 sent
+cmake-*
+.idea
