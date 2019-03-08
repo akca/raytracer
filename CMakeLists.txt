@@ -28,4 +28,7 @@ add_executable(
 target_link_libraries(raytracer ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(raytracer ${JPEG_LIBRARIES})
 
-file(COPY res DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY
+        res
+        res/477_hw2/textures
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
