@@ -28,6 +28,4 @@ add_executable(
 target_link_libraries(raytracer ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(raytracer ${JPEG_LIBRARIES})
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/hw1_sample_scenes
-        ${CMAKE_CURRENT_SOURCE_DIR}/hw2_sample_scenes
-        DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY res DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
