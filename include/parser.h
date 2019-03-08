@@ -34,6 +34,8 @@ namespace parser {
         Vector3D diffuse;
         Vector3D specular;
         Vector3D mirror;
+        Vector3D transparency;
+        float refraction_index;
         float phong_exponent;
     };
 
@@ -41,6 +43,7 @@ namespace parser {
         // Data
         Vec3i background_color;
         float shadow_ray_epsilon;
+        float intersection_test_epsilon;
         int max_recursion_depth;
         std::vector<Camera> cameras;
         Vector3D ambient_light;

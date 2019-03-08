@@ -41,6 +41,16 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     }
     stream >> shadow_ray_epsilon;
 
+    // Get IntersectionTestEpsilon
+    element = root->FirstChildElement("IntersectionTestEpsilon");
+    if (element) {
+        stream << element->GetText() << std::endl;
+    } else {
+        stream << 1e-7 << std::endl;
+    }
+    stream >> intersection_test_epsilon;
+
+
     // Get MaxRecursionDepth
     element = root->FirstChildElement("MaxRecursionDepth");
     if (element) {
@@ -142,6 +152,16 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         if (child) {
             stream << child->GetText() << std::endl;
             stream >> material.phong_exponent;
+        }
+        child = element->FirstChildElement("Transparency");
+        if (child) {
+            stream << child->GetText() << std::endl;
+            stream >> material.transparency.x >> material.transparency.y >> material.transparency.z;
+        }
+        child = element->FirstChildElement("RefractionIndex");
+        if (child) {
+            stream << child->GetText() << std::endl;
+            stream >> material.refraction_index;
         }
 
         materials.push_back(material);
