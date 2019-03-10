@@ -35,8 +35,8 @@ namespace parser {
         Vector3D specular;
         Vector3D mirror;
         Vector3D transparency;
-        float refraction_index;
-        float phong_exponent;
+        float refraction_index = 1.f;
+        float phong_exponent = 1.f;
     };
 
     struct Scene {

@@ -23,6 +23,12 @@ public:
         z = v.z;
     }
 
+    Vector3D(const Vec3i &v) {
+        x = v.x;
+        y = v.y;
+        z = v.z;
+    }
+
     Vector3D(float i, float j, float k) {
         x = i;
         y = j;
@@ -60,6 +66,10 @@ public:
         return Vector3D(x * cons, y * cons, z * cons);
     }
 
+    Vector3D power(float cons) const {
+        return Vector3D(powf(x, cons), powf(y, cons), powf(z, cons));
+    }
+
     // Vector cross product
     Vector3D operator*(const Vector3D &v) const {
         return Vector3D(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
@@ -74,7 +84,7 @@ public:
     }
 
     float distance(const Vector3D &v) const {
-        return sqrtf(pow((x - v.x), 2) + pow((y - v.y), 2) + pow((z - v.z), 2));
+        return sqrtf(powf((x - v.x), 2) + powf((y - v.y), 2) + powf((z - v.z), 2));
     }
 
     void applyTransform(const float *v, bool isVector) {

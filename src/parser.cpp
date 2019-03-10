@@ -5,6 +5,7 @@
 #include "../include/triangle.h"
 #include "../include/utility.h"
 #include <sstream>
+#include <iostream>
 #include <stdexcept>
 
 void parser::Scene::loadFromXml(const std::string &filepath) {
@@ -46,7 +47,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     if (element) {
         stream << element->GetText() << std::endl;
     } else {
-        stream << 1e-7 << std::endl;
+        stream << "1e-7" << std::endl;
     }
     stream >> intersection_test_epsilon;
 
@@ -63,8 +64,10 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     // Get Cameras
     element = root->FirstChildElement("Cameras");
     element = element->FirstChildElement("Camera");
-    Camera camera;
     while (element) {
+
+        Camera camera;
+
         auto child = element->FirstChildElement("Position");
         stream << child->GetText() << std::endl;
         child = element->FirstChildElement("Gaze");
@@ -106,8 +109,11 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     stream << child->GetText() << std::endl;
     stream >> ambient_light.x >> ambient_light.y >> ambient_light.z;
     element = element->FirstChildElement("PointLight");
-    PointLight point_light;
+
     while (element) {
+
+        PointLight point_light;
+
         child = element->FirstChildElement("Position");
         stream << child->GetText() << std::endl;
         child = element->FirstChildElement("Intensity");
@@ -125,8 +131,10 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     // Get Materials
     element = root->FirstChildElement("Materials");
     element = element->FirstChildElement("Material");
-    Material material;
     while (element) {
+
+        Material material;
+
         child = element->FirstChildElement("AmbientReflectance");
         if (child) {
             stream << child->GetText() << std::endl;
