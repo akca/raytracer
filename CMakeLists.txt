@@ -19,6 +19,7 @@ find_package(JPEG)
 add_executable(
         raytracer
         src/main.cpp
+        src/shade.cpp
         src/parser.cpp
         src/ppm.cpp
         src/jpeg.cpp
