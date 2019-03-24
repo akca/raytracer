@@ -24,7 +24,8 @@ add_executable(
         src/ppm.cpp
         src/jpeg.cpp
         src/utility.cpp
-        src/tinyxml2.cpp)
+        src/tinyxml2.cpp
+        src/bvh.cpp)
 
 target_link_libraries(raytracer ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(raytracer ${JPEG_LIBRARIES})

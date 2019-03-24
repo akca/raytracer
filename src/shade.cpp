@@ -76,7 +76,7 @@ void fresnel(const Vector3D &I, const Vector3D &N, const float &ior, float &kr) 
     // kt = 1 - kr;
 }
 
-Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, int recursionDepth) {
+Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, bool backfaceCulling, int recursionDepth) {
 
     if (recursionDepth > scene.max_recursion_depth)
         return Vector3D(scene.background_color);
@@ -88,7 +88,7 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, i
 
     // search for nearest intersection
     for (auto &object : scene.objects) {
-        if (object->intersects(rayOrigin, direction, tmin, intersectPoint, normal, false, texCoord)) {
+        if (object->intersects(Ray(rayOrigin, direction), tmin, intersectPoint, normal, backfaceCulling, texCoord)) {
             intersectObject = object;
         }
     }
@@ -124,7 +124,7 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, i
 
             // shadow ray
             for (auto &sobject : scene.objects) {
-                if (sobject->intersects(shadowRayOrigin, wi, stmin, tmp_vec, tmp_vec, true, tmp_vec2)) {
+                if (sobject->intersects(Ray(shadowRayOrigin, wi), stmin, tmp_vec, tmp_vec, false, tmp_vec2)) {
                     underShadow = true;
                     break;
                 }
@@ -185,18 +185,19 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, i
         }
 
         // mirror reflection
-        if ((kMirror.x + kMirror.y + kMirror.z > 0.001f)) {
+        if ((kMirror.x() + kMirror.y() + kMirror.z() > 0.001f)) {
 
             Vector3D reflection_direction = reflect(direction, normal);
 
             Vector3D ray_origin_with_epsilon = intersectPoint + reflection_direction * scene.shadow_ray_epsilon;
 
             pixelColor = pixelColor + kMirror.multiply(shade(scene, ray_origin_with_epsilon, reflection_direction,
+                                                             backfaceCulling,
                                                              recursionDepth + 1));
         }
 
         // refraction and transparency
-        if ((kTransparency.x + kTransparency.y + kTransparency.z > 0.001f)) {
+        if ((kTransparency.x() + kTransparency.y() + kTransparency.z() > 0.001f)) {
 
             Vector3D refractionColor;
             Vector3D reflectionColor;
@@ -211,12 +212,12 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, i
             if (kr < 1) {
                 Vector3D refractionDirection = refract(direction, normal, kRefraction).normalize();
                 Vector3D refractionRayOrigin = is_outside ? intersectPoint - bias : intersectPoint + bias;
-                refractionColor = shade(scene, refractionRayOrigin, refractionDirection, recursionDepth + 1);
+                refractionColor = shade(scene, refractionRayOrigin, refractionDirection, !is_outside, recursionDepth + 1);
             }
 
             Vector3D reflectionDirection = reflect(direction, normal);
             Vector3D reflectionRayOrigin = is_outside ? intersectPoint + bias : intersectPoint - bias;
-            reflectionColor = shade(scene, reflectionRayOrigin, reflectionDirection, recursionDepth + 1);
+            reflectionColor = shade(scene, reflectionRayOrigin, reflectionDirection, false, recursionDepth + 1);
 
             if (!is_outside) {
                 // if the ray is inside, attenuation is applied
@@ -232,9 +233,9 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, i
         }
 
     } else {
-        pixelColor.x = scene.background_color.x; // r
-        pixelColor.y = scene.background_color.y; // g
-        pixelColor.z = scene.background_color.z; // b
+        pixelColor.e[0] = scene.background_color.x; // r
+        pixelColor.e[1] = scene.background_color.y; // g
+        pixelColor.e[2] = scene.background_color.z; // b
     }
     return pixelColor;
 }
@@ -261,11 +262,11 @@ void trace(parser::Scene *scene, parser::Camera *camera, int startHeight,
             Vector3D direction = pixelPosition - camera->position;
             direction.normalize();
 
-            Vector3D pixelColor = shade(*scene, camera->position, direction, 0);
+            Vector3D pixelColor = shade(*scene, camera->position, direction, true, 0);
 
-            image[i++] = (unsigned char) std::min((int) std::round(pixelColor.x), 255); // r
-            image[i++] = (unsigned char) std::min((int) std::round(pixelColor.y), 255); // g
-            image[i++] = (unsigned char) std::min((int) std::round(pixelColor.z), 255); // b
+            image[i++] = (unsigned char) std::min((int) std::round(pixelColor.x()), 255); // r
+            image[i++] = (unsigned char) std::min((int) std::round(pixelColor.y()), 255); // g
+            image[i++] = (unsigned char) std::min((int) std::round(pixelColor.z()), 255); // b
         }
     }
 }

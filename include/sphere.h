@@ -20,12 +20,16 @@ public:
         texture_id = t;
     }
 
-    bool intersects(const Vector3D &origin, const Vector3D &direction, float &t,
-                    Vector3D &intersectPoint, Vector3D &normal, bool isShadowRay,
+    BBox boundingBox(float x, float y) {
+        return BBox();
+    }
+
+    bool intersects(const Ray &ray, float &t,
+                    Vector3D &intersectPoint, Vector3D &normal, bool backfaceCulling,
                     Vec2f &texCoord) {
 
-        Vector3D newOrigin = origin;
-        Vector3D newDirection = direction;
+        Vector3D newOrigin = ray.origin();
+        Vector3D newDirection = ray.direction();
 
         if (invTransformMatrix) {
             newDirection.applyTransform(invTransformMatrix, true);
@@ -63,22 +67,20 @@ public:
 
             intersectPoint = newOrigin + newDirection * t;
 
-            if (!isShadowRay) {
+            normal = (intersectPoint - center).normalize();
 
-                normal = (intersectPoint - center).normalize();
-
-                if (texture_id != -1) {
-                    Vector3D relative = intersectPoint - center;
-                    texCoord.x = -atan2(relative.z, relative.x) / (2 * M_PI) + 0.5f; // u
-                    texCoord.y = acos(relative.y / r) / M_PI;                        // v
-                }
-
-                if (transformMatrix) {
-                    intersectPoint.applyTransform(transformMatrix, false);
-                    normal.applyTransform(invTransposeTransformMatrix, true);
-                    normal.normalize();
-                }
+            if (texture_id != -1) {
+                Vector3D relative = intersectPoint - center;
+                texCoord.x = -atan2(relative.z(), relative.x()) / (2 * M_PI) + 0.5f; // u
+                texCoord.y = acos(relative.y() / r) / M_PI;                        // v
             }
+
+            if (transformMatrix) {
+                intersectPoint.applyTransform(transformMatrix, false);
+                normal.applyTransform(invTransposeTransformMatrix, true);
+                normal.normalize();
+            }
+
             return true;
         }
     }

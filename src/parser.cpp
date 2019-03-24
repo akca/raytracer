@@ -83,9 +83,9 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         child = element->FirstChildElement("ImageName");
         stream << child->GetText() << std::endl;
 
-        stream >> camera.position.x >> camera.position.y >> camera.position.z;
-        stream >> camera.gaze.x >> camera.gaze.y >> camera.gaze.z;
-        stream >> camera.up.x >> camera.up.y >> camera.up.z;
+        stream >> camera.position.e[0] >> camera.position.e[1] >> camera.position.e[2];
+        stream >> camera.gaze.e[0] >> camera.gaze.e[1] >> camera.gaze.e[2];
+        stream >> camera.up.e[0] >> camera.up.e[1] >> camera.up.e[2];
         stream >> camera.near_plane.x >> camera.near_plane.y >>
                camera.near_plane.z >> camera.near_plane.w;
         stream >> camera.near_distance;
@@ -107,7 +107,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     element = root->FirstChildElement("Lights");
     auto child = element->FirstChildElement("AmbientLight");
     stream << child->GetText() << std::endl;
-    stream >> ambient_light.x >> ambient_light.y >> ambient_light.z;
+    stream >> ambient_light.e[0] >> ambient_light.e[1] >> ambient_light.e[2];
     element = element->FirstChildElement("PointLight");
 
     while (element) {
@@ -119,10 +119,10 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         child = element->FirstChildElement("Intensity");
         stream << child->GetText() << std::endl;
 
-        stream >> point_light.position.x >> point_light.position.y >>
-               point_light.position.z;
-        stream >> point_light.intensity.x >> point_light.intensity.y >>
-               point_light.intensity.z;
+        stream >> point_light.position.e[0] >> point_light.position.e[1] >>
+               point_light.position.e[2];
+        stream >> point_light.intensity.e[0] >> point_light.intensity.e[1] >>
+               point_light.intensity.e[2];
 
         point_lights.push_back(point_light);
         element = element->NextSiblingElement("PointLight");
@@ -138,23 +138,23 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         child = element->FirstChildElement("AmbientReflectance");
         if (child) {
             stream << child->GetText() << std::endl;
-            stream >> material.ambient.x >> material.ambient.y >> material.ambient.z;
+            stream >> material.ambient.e[0] >> material.ambient.e[1] >> material.ambient.e[2];
         }
         child = element->FirstChildElement("DiffuseReflectance");
         if (child) {
             stream << child->GetText() << std::endl;
-            stream >> material.diffuse.x >> material.diffuse.y >> material.diffuse.z;
+            stream >> material.diffuse.e[0] >> material.diffuse.e[1] >> material.diffuse.e[2];
         }
         child = element->FirstChildElement("SpecularReflectance");
         if (child) {
             stream << child->GetText() << std::endl;
-            stream >> material.specular.x >> material.specular.y >>
-                   material.specular.z;
+            stream >> material.specular.e[0] >> material.specular.e[1] >>
+                   material.specular.e[2];
         }
         child = element->FirstChildElement("MirrorReflectance");
         if (child) {
             stream << child->GetText() << std::endl;
-            stream >> material.mirror.x >> material.mirror.y >> material.mirror.z;
+            stream >> material.mirror.e[0] >> material.mirror.e[1] >> material.mirror.e[2];
         }
         child = element->FirstChildElement("PhongExponent");
         if (child) {
@@ -164,7 +164,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         child = element->FirstChildElement("Transparency");
         if (child) {
             stream << child->GetText() << std::endl;
-            stream >> material.transparency.x >> material.transparency.y >> material.transparency.z;
+            stream >> material.transparency.e[0] >> material.transparency.e[1] >> material.transparency.e[2];
         }
         child = element->FirstChildElement("RefractionIndex");
         if (child) {
@@ -242,8 +242,8 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     if (element) {
         stream << element->GetText() << std::endl;
         Vector3D vertex;
-        while (!(stream >> vertex.x).eof()) {
-            stream >> vertex.y >> vertex.z;
+        while (!(stream >> vertex.e[0]).eof()) {
+            stream >> vertex.e[1] >> vertex.e[2];
             vertex_data.push_back(vertex);
         }
         stream.clear();

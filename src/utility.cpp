@@ -114,15 +114,15 @@ float *createTransformMatrix(std::vector<Vec3f> &t_translation,
 
             // find min component of u
             Vector3D u(t_rotation[tid].y, t_rotation[tid].z, t_rotation[tid].w);
-            float mincoord = std::min({u.x, u.y, u.z});
+            float mincoord = std::min({u.x(), u.y(), u.z()});
             Vector3D v;
 
-            if (fabs(u.x - mincoord) < 1e-5) {
-                v = Vector3D(0, -u.z, u.y);
-            } else if (fabs(u.y - mincoord) < 1e-5) {
-                v = Vector3D(-u.z, 0, u.x);
-            } else if (fabs(u.z - mincoord) < 1e-5) {
-                v = Vector3D(-u.y, u.x, 0);
+            if (fabs(u.x() - mincoord) < 1e-5) {
+                v = Vector3D(0, -u.z(), u.y());
+            } else if (fabs(u.y() - mincoord) < 1e-5) {
+                v = Vector3D(-u.z(), 0, u.x());
+            } else if (fabs(u.z() - mincoord) < 1e-5) {
+                v = Vector3D(-u.y(), u.x(), 0);
             } else {
                 // std::cout << "\n\n\nHHHHHHHHHHHHHHHHHH\\n\n\n\n\n\n\n";
                 return NULL;
@@ -132,11 +132,11 @@ float *createTransformMatrix(std::vector<Vec3f> &t_translation,
 
             angle = t_rotation[tid].x * M_PI / 180.0f;
 
-            float M[16]{u.x, u.y, u.z, 0, v.x, v.y, v.z, 0,
-                        w.x, w.y, w.z, 0, 0, 0, 0, 1};
+            float M[16]{u.x(), u.y(), u.z(), 0, v.x(), v.y(), v.z(), 0,
+                        w.x(), w.y(), w.z(), 0, 0, 0, 0, 1};
 
-            float Minv[16]{u.x, v.x, w.x, 0, u.y, v.y, w.y, 0,
-                           u.z, v.z, w.z, 0, 0, 0, 0, 1};
+            float Minv[16]{u.x(), v.x(), w.x(), 0, u.y(), v.y(), w.y(), 0,
+                           u.z(), v.z(), w.z(), 0, 0, 0, 0, 1};
 
             float cosa = cos(angle);
             float sina = sin(angle);
