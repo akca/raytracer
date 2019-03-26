@@ -7,6 +7,7 @@
 #include <sstream>
 #include <iostream>
 #include <stdexcept>
+#include <bvh.h>
 
 void parser::Scene::loadFromXml(const std::string &filepath) {
     tinyxml2::XMLDocument file;
@@ -327,7 +328,17 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
                     new Triangle(v1, v2 - v1, v3 - v1, material_id - 1, texture_id - 1,
                                  texCoord1, texCoord2, texCoord3);
 
+            newobj->minPoint.e[0] = std::min(v1.x(), std::min(v2.x(), v3.x()));
+            newobj->minPoint.e[1] = std::min(v1.y(), std::min(v2.y(), v3.y()));
+            newobj->minPoint.e[2] = std::min(v1.z(), std::min(v2.z(), v3.z()));
+
+            newobj->maxPoint.e[0] = std::max(v1.x(), std::max(v2.x(), v3.x()));
+            newobj->maxPoint.e[1] = std::max(v1.y(), std::max(v2.y(), v3.y()));
+            newobj->maxPoint.e[2] = std::max(v1.z(), std::max(v2.z(), v3.z()));
+
+
             faces->push_back(newobj);
+            // mesh objects
             objects.push_back(newobj);
         }
         meshes.push_back(faces);
@@ -387,6 +398,15 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
             Triangle *newobj =
                     new Triangle(v1, edge1, edge2, material_id - 1, texture_id - 1,
                                  (*face).texCoord1, (*face).texCoord2, (*face).texCoord3);
+
+            newobj->minPoint.e[0] = std::min(v1.x(), std::min(edge1.x(), edge2.x()));
+            newobj->minPoint.e[1] = std::min(v1.y(), std::min(edge1.y(), edge2.y()));
+            newobj->minPoint.e[2] = std::min(v1.z(), std::min(edge1.z(), edge2.z()));
+
+            newobj->maxPoint.e[0] = std::max(v1.x(), std::max(edge1.x(), edge2.x()));
+            newobj->maxPoint.e[1] = std::max(v1.y(), std::max(edge1.y(), edge2.y()));
+            newobj->maxPoint.e[2] = std::max(v1.z(), std::max(edge1.z(), edge2.z()));
+
             objects.push_back(newobj);
         }
         if (transformMatrix) {
@@ -522,4 +542,12 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         objects.push_back(newobj);
         element = element->NextSiblingElement("Sphere");
     }
+
+    BVH* root_bvh = new BVH(objects.data(), objects.size());
+
+    std::vector<Object *> bvh_obj;
+    bvh_obj.push_back(root_bvh);
+
+    objects = bvh_obj;
+
 }

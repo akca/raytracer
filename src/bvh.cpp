@@ -5,6 +5,7 @@
 BVH::BVH() {}
 
 BVH::BVH(Object **shapes, int num_shapes) {
+
     if (num_shapes == 1) *this = BVH(shapes[0], shapes[0]);
     if (num_shapes == 2) *this = BVH(shapes[0], shapes[1]);
 
@@ -25,16 +26,22 @@ BVH::BVH(Object **shapes, int num_shapes) {
 BBox BVH::boundingBox(float timeO, float time1) { return bbox; }
 
 
-bool BVH::intersects(const Ray &ray, float &tmin,
-                     Vector3D &intersectPoint, Vector3D &normal, bool backfaceCulling,
-                     Vec2f &texCoord) {
+bool BVH::intersects(const Ray &ray, float &tmin, HitRecord &hit_record, bool backfaceCulling) {
 
-    if (!(bbox.rayIntersect(ray, tmin, 999999999)))
+    HitRecord hit_record_2;
+    hit_record_2.t = tmin;
+    float tmin2 = tmin;
+
+    if (!(bbox.rayIntersect(ray, 0, 99999999)))
         return false;
 
     // else call hit on both branches
-    bool isahit1 = right->intersects(ray, tmin, intersectPoint, normal, backfaceCulling, texCoord);
-    bool isahit2 = left->intersects(ray, tmin, intersectPoint, normal, backfaceCulling, texCoord);
+    bool isahit1 = right->intersects(ray, tmin, hit_record, backfaceCulling);
+    bool isahit2 = left->intersects(ray, tmin2, hit_record_2, backfaceCulling);
+
+    if (tmin2 < tmin) {
+        hit_record = hit_record_2;
+    }
 
     return (isahit1 || isahit2);
 }

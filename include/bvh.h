@@ -13,9 +13,7 @@ public:
 
     BVH(Object *prim1, Object *prim2, const BBox &_bbox);
 
-    bool intersects(const Ray &ray, float &t,
-                    Vector3D &intersectPoint, Vector3D &normal, bool backfaceCulling,
-                    Vec2f &texCoord) override;
+    bool intersects(const Ray &ray, float &tmin, HitRecord &hit_record, bool backfaceCulling) override;
 
 //    bool shadowHit(const Ray &r, float tmin, float tmax, float time) const;
 
@@ -38,7 +36,7 @@ inline BVH::BVH(Object *prim1, Object *prim2) {
     left = prim1;
     right = prim2;
     bbox = surround(prim1->boundingBox(0.0f, 0.0f),
-    prim2->boundingBox(0.0f, 0.0f));
+                    prim2->boundingBox(0.0f, 0.0f));
 }
 
 

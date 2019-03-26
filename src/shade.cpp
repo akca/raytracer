@@ -76,19 +76,20 @@ void fresnel(const Vector3D &I, const Vector3D &N, const float &ior, float &kr) 
     // kt = 1 - kr;
 }
 
-Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, bool backfaceCulling, int recursionDepth) {
+Vector3D
+shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, bool backfaceCulling, int recursionDepth) {
 
     if (recursionDepth > scene.max_recursion_depth)
         return Vector3D(scene.background_color);
 
     Object *intersectObject = nullptr;
     float tmin = std::numeric_limits<float>::max();
-    Vector3D normal, pixelColor, intersectPoint;
-    Vec2f texCoord; // texture coord
+    Vector3D pixelColor;
+    HitRecord hit_record;
 
     // search for nearest intersection
     for (auto &object : scene.objects) {
-        if (object->intersects(Ray(rayOrigin, direction), tmin, intersectPoint, normal, backfaceCulling, texCoord)) {
+        if (object->intersects(Ray(rayOrigin, direction), tmin, hit_record, backfaceCulling)) {
             intersectObject = object;
         }
     }
@@ -96,35 +97,29 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, b
     // if intersection with an object found
     if (intersectObject != nullptr) {
 
-        intersectPoint = rayOrigin + direction * tmin;
+        hit_record.intersection_point = rayOrigin + direction * tmin;
 
-        Vector3D &kDiffuse = scene.materials[intersectObject->material_id].diffuse;
-        Vector3D &kAmbient = scene.materials[intersectObject->material_id].ambient;
-        Vector3D &kSpecular = scene.materials[intersectObject->material_id].specular;
-        Vector3D &kMirror = scene.materials[intersectObject->material_id].mirror;
-        Vector3D &kTransparency = scene.materials[intersectObject->material_id].transparency;
-        const float &kRefraction = scene.materials[intersectObject->material_id].refraction_index;
+        Vector3D &kAmbient = scene.materials[hit_record.material_id].ambient;
 
         // ambient light
         pixelColor = kAmbient.multiply(scene.ambient_light);
 
         for (auto &light : scene.point_lights) {
 
-            Vector3D wi = light.position - intersectPoint;
-            float lightDistance = intersectPoint.distance(light.position);
+            Vector3D wi = light.position - hit_record.intersection_point;
+            float lightDistance = hit_record.intersection_point.distance(light.position);
             wi = wi / lightDistance; // normalize
 
-            Vector3D shadowRayOrigin = intersectPoint + wi * scene.shadow_ray_epsilon;
+            Vector3D shadowRayOrigin = hit_record.intersection_point + wi * scene.shadow_ray_epsilon;
 
             // search objects between light and intersection point
             float stmin = lightDistance;
+            HitRecord hit_record_shadow;
             bool underShadow = false;
-            Vector3D tmp_vec;
-            Vec2f tmp_vec2;
 
             // shadow ray
             for (auto &sobject : scene.objects) {
-                if (sobject->intersects(Ray(shadowRayOrigin, wi), stmin, tmp_vec, tmp_vec, false, tmp_vec2)) {
+                if (sobject->intersects(Ray(shadowRayOrigin, wi), stmin, hit_record_shadow, false)) {
                     underShadow = true;
                     break;
                 }
@@ -133,21 +128,22 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, b
             if (!underShadow) {
                 bool isReplaceAll = false;
 
-                float costheta_diff = std::max(float(0), wi.dotProduct(normal));
+                float costheta_diff = std::max(float(0), wi.dotProduct(hit_record.normal));
                 float distance2 = powf(lightDistance, 2);
+                Vector3D &kDiffuse = scene.materials[hit_record.material_id].diffuse;
 
                 // diffuse shading
-                if (intersectObject->texture_id == -1) {
+                if (hit_record.texture_id == -1) {
                     pixelColor =
                             pixelColor +
                             (kDiffuse * costheta_diff).multiply(light.intensity / distance2);
                 } else {
                     // if the object have texture
-                    Texture &texture = scene.textures[intersectObject->texture_id];
+                    Texture &texture = scene.textures[hit_record.texture_id];
 
                     DecalMode decalMode = texture.getDecalMode();
 
-                    Vector3D textureColor = texture.getColor(texCoord, texture.getInterpolation());
+                    Vector3D textureColor = texture.getColor(hit_record.texture_coords, texture.getInterpolation());
 
                     switch (decalMode) {
                         case REPLACE_KD:
@@ -174,22 +170,27 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, b
                     // for specular
                     Vector3D halfVector = (wi + direction.inverse()).normalize();
 
-                    float costheta_spec = std::max(float(0), normal.dotProduct(halfVector));
+                    float costheta_spec = std::max(float(0), hit_record.normal.dotProduct(halfVector));
 
                     // specular shading
                     pixelColor = pixelColor
-                                 + (kSpecular * powf(costheta_spec, scene.materials[intersectObject->material_id]
-                            .phong_exponent)).multiply(light.intensity / distance2);
+                                 + (scene.materials[hit_record.material_id].specular
+                                    * powf(costheta_spec,
+                                           scene.materials[hit_record.material_id].phong_exponent)).multiply(
+                            light.intensity / distance2);
                 }
             }
         }
 
         // mirror reflection
+        Vector3D &kMirror = scene.materials[hit_record.material_id].mirror;
+
         if ((kMirror.x() + kMirror.y() + kMirror.z() > 0.001f)) {
 
-            Vector3D reflection_direction = reflect(direction, normal);
+            Vector3D reflection_direction = reflect(direction, hit_record.normal);
 
-            Vector3D ray_origin_with_epsilon = intersectPoint + reflection_direction * scene.shadow_ray_epsilon;
+            Vector3D ray_origin_with_epsilon =
+                    hit_record.intersection_point + reflection_direction * scene.shadow_ray_epsilon;
 
             pixelColor = pixelColor + kMirror.multiply(shade(scene, ray_origin_with_epsilon, reflection_direction,
                                                              backfaceCulling,
@@ -197,26 +198,32 @@ Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, b
         }
 
         // refraction and transparency
+        Vector3D &kTransparency = scene.materials[hit_record.material_id].transparency;
+
         if ((kTransparency.x() + kTransparency.y() + kTransparency.z() > 0.001f)) {
 
             Vector3D refractionColor;
             Vector3D reflectionColor;
             float kr;
+            const float &kRefraction = scene.materials[hit_record.material_id].refraction_index;
 
             // compute fresnel
-            fresnel(direction, normal, kRefraction, kr);
-            bool is_outside = direction.dotProduct(normal) < 0;
-            Vector3D bias = normal * kRefractionBias;
+            fresnel(direction, hit_record.normal, kRefraction, kr);
+            bool is_outside = direction.dotProduct(hit_record.normal) < 0;
+            Vector3D bias = hit_record.normal * kRefractionBias;
 
             // compute refraction if it is not a case of total internal reflection
             if (kr < 1) {
-                Vector3D refractionDirection = refract(direction, normal, kRefraction).normalize();
-                Vector3D refractionRayOrigin = is_outside ? intersectPoint - bias : intersectPoint + bias;
-                refractionColor = shade(scene, refractionRayOrigin, refractionDirection, !is_outside, recursionDepth + 1);
+                Vector3D refractionDirection = refract(direction, hit_record.normal, kRefraction).normalize();
+                Vector3D refractionRayOrigin = is_outside ? hit_record.intersection_point - bias :
+                                               hit_record.intersection_point + bias;
+                refractionColor = shade(scene, refractionRayOrigin, refractionDirection, !is_outside,
+                                        recursionDepth + 1);
             }
 
-            Vector3D reflectionDirection = reflect(direction, normal);
-            Vector3D reflectionRayOrigin = is_outside ? intersectPoint + bias : intersectPoint - bias;
+            Vector3D reflectionDirection = reflect(direction, hit_record.normal);
+            Vector3D reflectionRayOrigin = is_outside ? hit_record.intersection_point + bias :
+                                           hit_record.intersection_point - bias;
             reflectionColor = shade(scene, reflectionRayOrigin, reflectionDirection, false, recursionDepth + 1);
 
             if (!is_outside) {
