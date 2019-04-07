@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
 
         auto *image = new unsigned char[width * height * 3];
 
-        size_t threadCount = 1;
+        size_t threadCount = 128;
         int partition = height / threadCount;
         int startHeight = 0;
         int endHeight = partition;

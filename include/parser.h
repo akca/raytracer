@@ -6,6 +6,8 @@
 #include "triangle.h"
 #include "utility.h"
 #include "vector3d.h"
+#include "bvh.h"
+#include "mesh.h"
 #include <string>
 #include <vector>
 
@@ -52,11 +54,12 @@ namespace parser {
         std::vector<Texture> textures;
         std::vector<Vector3D> vertex_data;
         std::vector<Vec2f> texCoordData;
-        std::vector<std::vector<Triangle *> *> meshes;
+        std::vector<Mesh *> meshes;
         std::vector<Object *> objects;
         std::vector<Vec3f> t_translation;
         std::vector<Vec4f> t_rotation;
         std::vector<Vec3f> t_scaling;
+        BVH *root_bvh;
 
         // Functions
         void loadFromXml(const std::string &filepath);

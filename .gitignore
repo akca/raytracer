@@ -1,6 +1,9 @@
 raytracer
 *.ppm
+*.png
+*.cbp
 sent
 cmake-build*
 Makefile
 .idea
+blog

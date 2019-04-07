@@ -10,7 +10,7 @@
 
 struct HitRecord
 {
-    float t;
+    float t = std::numeric_limits<float>::max();
     Vec2f texture_coords;
     int material_id = -1;
     int texture_id = -1;
@@ -22,11 +22,11 @@ class Object {
 public:
     virtual ~Object() {}
 
-    virtual bool intersects(const Ray &ray, float &t, HitRecord& hit_record, bool backfaceCulling) = 0;
+    virtual bool intersects(const Ray &ray, float tmin, float tmax, HitRecord& hit_record, bool backfaceCulling) = 0;
 
-    virtual BBox boundingBox(float x, float y) = 0;
+    virtual bool bounding_box(float t0, float t1, BBox& box) = 0;
 
-    int material_id;
+    int material_id = -1;
     int texture_id = -1;
 };
 

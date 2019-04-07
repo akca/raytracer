@@ -20,11 +20,12 @@ public:
         texture_id = t;
     }
 
-    BBox boundingBox(float x, float y) override {
-        return BBox();
+    bool bounding_box(float t0, float t1, BBox& box) override {
+        box = BBox(center - Vector3D(r, r, r), center + Vector3D(r, r, r));
+        return true;
     }
 
-    bool intersects(const Ray &ray, float &t, HitRecord &hit_record, bool backfaceCulling) override {
+    bool intersects(const Ray &ray, float tmin, float tmax, HitRecord &hit_record, bool backfaceCulling) override {
 
         Vector3D newOrigin = ray.origin();
         Vector3D newDirection = ray.direction();
@@ -34,6 +35,7 @@ public:
             newDirection.normalize();
             newOrigin.applyTransform(invTransformMatrix, false);
         }
+
         Vector3D L = newOrigin - center;
 
         float b = 2 * newDirection.dotProduct(L);
@@ -50,20 +52,17 @@ public:
         if (t1 < 0)
             return false; // both roots are negative, no intersection
 
-        float tmin;
         if (t0 < 0) {
-            tmin = t1; // if t0 is negative, t1 should be the visible param.
-        } else {
-            tmin = t0;
+            t0 = t1; // if t0 is negative, t1 should be the visible param.
         }
 
         // if a closer object is already there, this object is not visible
-        if (tmin > t)
+        if (tmin > t0 || t0 > tmax || hit_record.t < t0)
             return false;
         else {
-            t = tmin;
+            hit_record.t = t0;
 
-            hit_record.intersection_point = newOrigin + newDirection * t;
+            hit_record.intersection_point = newOrigin + newDirection * hit_record.t;
 
             hit_record.normal = (hit_record.intersection_point - center).normalize();
 

@@ -1,75 +1,98 @@
-
 #include <bvh.h>
-#include <qsplit.h>
 
-BVH::BVH() {}
+bool BVH::bounding_box(float t0, float t1, BBox &box) {
+    box = bbox;
+    return true;
+}
+
+
+bool BVH::intersects(const Ray &ray, float tmin, float tmax, HitRecord &hit_record, bool backfaceCulling) {
+
+    if (!bbox.rayIntersect(ray, tmin, tmax)) {
+        return false;
+    }
+
+    HitRecord left_rec, right_rec;
+
+    bool hit_left = left->intersects(ray, tmin, tmax, left_rec, backfaceCulling);
+    bool hit_right = right->intersects(ray, tmin, tmax, right_rec, backfaceCulling);
+
+    if (hit_left && hit_right) {
+        if (left_rec.t < right_rec.t)
+            hit_record = left_rec;
+        else
+            hit_record = right_rec;
+        return true;
+    } else if (hit_left) {
+        hit_record = left_rec;
+        return true;
+    } else if (hit_right) {
+        hit_record = right_rec;
+        return true;
+    } else
+        return false;
+
+}
+
+int box_x_compare(const void *a, const void *b) {
+    BBox box_left, box_right;
+    Object *ah = *(Object **) a;
+    Object *bh = *(Object **) b;
+    if (!ah->bounding_box(0, 0, box_left) || !bh->bounding_box(0, 0, box_right))
+        std::cerr << "no bounding box in bvh_node constructor\n";
+    if (box_left.min().x() - box_right.min().x() < 0.0)
+        return -1;
+    else
+        return 1;
+}
+
+int box_y_compare(const void *a, const void *b) {
+    BBox box_left, box_right;
+    Object *ah = *(Object **) a;
+    Object *bh = *(Object **) b;
+    if (!ah->bounding_box(0, 0, box_left) || !bh->bounding_box(0, 0, box_right))
+        std::cerr << "no bounding box in bvh_node constructor\n";
+    if (box_left.min().y() - box_right.min().y() < 0.0)
+        return -1;
+    else
+        return 1;
+}
+
+int box_z_compare(const void *a, const void *b) {
+    BBox box_left, box_right;
+    Object *ah = *(Object **) a;
+    Object *bh = *(Object **) b;
+    if (!ah->bounding_box(0, 0, box_left) || !bh->bounding_box(0, 0, box_right))
+        std::cerr << "no bounding box in bvh_node constructor\n";
+    if (box_left.min().z() - box_right.min().z() < 0.0)
+        return -1;
+    else
+        return 1;
+}
 
 BVH::BVH(Object **shapes, int num_shapes) {
 
-    if (num_shapes == 1) *this = BVH(shapes[0], shapes[0]);
-    if (num_shapes == 2) *this = BVH(shapes[0], shapes[1]);
+    int axis = int(3 * drand48());
+    if (axis == 0)
+        qsort(shapes, num_shapes, sizeof(Object *), box_x_compare);
+    else if (axis == 1)
+        qsort(shapes, num_shapes, sizeof(Object *), box_y_compare);
+    else
+        qsort(shapes, num_shapes, sizeof(Object *), box_z_compare);
 
-    // find the midpoint of the bounding box to use as a qsplit pivot
-    bbox = shapes[0]->boundingBox(0.0f, 0.0f);
-
-    for (int i = 1; i < num_shapes; i++)
-        bbox = surround(bbox, shapes[i]->boundingBox(0.0f, 0.0f));
-
-    Vector3D pivot = (bbox.max() + bbox.min()) / 2.0f;
-    int mid_point = qsplit(shapes, num_shapes, pivot.x(), 0);
-
-    // create a new boundingVolume
-    left = buildBranch(shapes, mid_point, 1);
-    right = buildBranch(&shapes[mid_point], num_shapes - mid_point, 1);
-}
-
-BBox BVH::boundingBox(float timeO, float time1) { return bbox; }
-
-
-bool BVH::intersects(const Ray &ray, float &tmin, HitRecord &hit_record, bool backfaceCulling) {
-
-    HitRecord hit_record_2;
-    hit_record_2.t = tmin;
-    float tmin2 = tmin;
-
-    if (!(bbox.rayIntersect(ray, 0, 99999999)))
-        return false;
-
-    // else call hit on both branches
-    bool isahit1 = right->intersects(ray, tmin, hit_record, backfaceCulling);
-    bool isahit2 = left->intersects(ray, tmin2, hit_record_2, backfaceCulling);
-
-    if (tmin2 < tmin) {
-        hit_record = hit_record_2;
+    if (num_shapes == 1) {
+        left = right = shapes[0];
+    } else if (num_shapes == 2) {
+        left = shapes[0];
+        right = shapes[1];
+    } else {
+        left = new BVH(shapes, num_shapes / 2);
+        right = new BVH(shapes + num_shapes / 2, num_shapes - num_shapes / 2);
     }
 
-    return (isahit1 || isahit2);
-}
-//
-//bool BVH::shadowHit(const Ray &r, float tmin, float tmax, float time) const {
-//    if (!(bbox.rayIntersect(r, tmin, tmax))) return false;
-//    if (right->shadowHit(r, tmin, tmax, time)) return true;
-//    return left->shadowHit(r, tmin, tmax, time);
-//}
+    BBox box_left, box_right;
 
-Object *BVH::buildBranch(Object **shapes, int shape_size, int axis) {
-    if (shape_size == 1) return shapes[0];
-    if (shape_size == 2) return new BVH(shapes[0], shapes[1]);
-
-    // find the midpoint of the bounding box to use as a qsplit pivot
-    BBox box = shapes[0]->boundingBox(0.0f, 0.0f);
-
-    for (int i = 1; i < shape_size; i++)
-        box = surround(box, shapes[i]->boundingBox(0.0f, 0.0f));
-
-    Vector3D pivot = (box.max() + box.min()) / 2.0f;
-
-    // now split according to correct axis
-    int mid_point = qsplit(shapes, shape_size, pivot[axis], axis);
-
-    // create a new boundingVolume
-    Object *left = buildBranch(shapes, mid_point, (axis + 1) % 3);
-    Object *right = buildBranch(&shapes[mid_point], shape_size - mid_point,
-                                (axis + 1) % 3);
-    return new BVH(left, right, box);
+    if (!left->bounding_box(0, 0, box_left) || !right->bounding_box(0, 0, box_right))
+        std::cerr << "no bounding box in bvh_node constructor\n";
+    bbox = surround(box_left, box_right);
 }

@@ -82,22 +82,15 @@ shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, bool backf
     if (recursionDepth > scene.max_recursion_depth)
         return Vector3D(scene.background_color);
 
-    Object *intersectObject = nullptr;
-    float tmin = std::numeric_limits<float>::max();
+    float tmin = 0.000001;
+    float tmax = std::numeric_limits<float>::max();
     Vector3D pixelColor;
     HitRecord hit_record;
 
-    // search for nearest intersection
-    for (auto &object : scene.objects) {
-        if (object->intersects(Ray(rayOrigin, direction), tmin, hit_record, backfaceCulling)) {
-            intersectObject = object;
-        }
-    }
-
     // if intersection with an object found
-    if (intersectObject != nullptr) {
+    if (scene.root_bvh->intersects(Ray(rayOrigin, direction), tmin, tmax, hit_record, backfaceCulling)) {
 
-        hit_record.intersection_point = rayOrigin + direction * tmin;
+        hit_record.intersection_point = rayOrigin + direction * hit_record.t;
 
         Vector3D &kAmbient = scene.materials[hit_record.material_id].ambient;
 
@@ -115,14 +108,12 @@ shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, bool backf
             // search objects between light and intersection point
             float stmin = lightDistance;
             HitRecord hit_record_shadow;
+
             bool underShadow = false;
 
             // shadow ray
-            for (auto &sobject : scene.objects) {
-                if (sobject->intersects(Ray(shadowRayOrigin, wi), stmin, hit_record_shadow, false)) {
-                    underShadow = true;
-                    break;
-                }
+            if (scene.root_bvh->intersects(Ray(shadowRayOrigin, wi), 0, stmin, hit_record_shadow, false)) {
+                underShadow = true;
             }
 
             if (!underShadow) {
@@ -228,7 +219,7 @@ shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, bool backf
 
             if (!is_outside) {
                 // if the ray is inside, attenuation is applied
-                Vector3D attenuation = kTransparency.power(tmin);
+                Vector3D attenuation = kTransparency.power(hit_record.t);
 
                 refractionColor = refractionColor.multiply(attenuation);
                 reflectionColor = reflectionColor.multiply(attenuation);

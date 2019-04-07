@@ -23,14 +23,15 @@ public:
 
     Vector3D pp[2];
 
-    bool rayIntersect(const Ray &r, float tmin, float tmax) const {
+    inline bool rayIntersect(const Ray &r, float tmin, float tmax) const {
         for (int a = 0; a < 3; a++) {
-            float t0 = ffmin((min()[a] - r.origin()[a]) / r.direction()[a],
-                             (max()[a] - r.origin()[a]) / r.direction()[a]);
-            float t1 = ffmax((min()[a] - r.origin()[a]) / r.direction()[a],
-                             (max()[a] - r.origin()[a]) / r.direction()[a]);
-            tmin = ffmax(t0, tmin);
-            tmax = ffmin(t1, tmax);
+            float invD = 1.0f / r.direction()[a];
+            float t0 = (min()[a] - r.origin()[a]) * invD;
+            float t1 = (max()[a] - r.origin()[a]) * invD;
+            if (invD < 0.0f)
+                std::swap(t0, t1);
+            tmin = t0 > tmin ? t0 : tmin;
+            tmax = t1 < tmax ? t1 : tmax;
             if (tmax <= tmin)
                 return false;
         }
@@ -42,12 +43,12 @@ public:
 inline BBox surround(const BBox &b1, const BBox &b2) {
 
 
-    Vector3D small(fmin(b1.min().x(), b2.min().x()),
-                   fmin(b1.min().y(), b2.min().y()),
-                   fmin(b1.min().z(), b2.min().z()));
-    Vector3D big(fmax(b1.max().x(), b2.max().x()),
-                 fmax(b1.max().y(), b2.max().y()),
-                 fmax(b1.max().z(), b2.max().z()));
+    Vector3D small(ffmin(b1.min().x(), b2.min().x()),
+                   ffmin(b1.min().y(), b2.min().y()),
+                   ffmin(b1.min().z(), b2.min().z()));
+    Vector3D big(ffmax(b1.max().x(), b2.max().x()),
+                 ffmax(b1.max().y(), b2.max().y()),
+                 ffmax(b1.max().z(), b2.max().z()));
     return BBox(small, big);
 }
 

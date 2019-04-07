@@ -267,18 +267,25 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     element = element->FirstChildElement("Mesh");
 
     while (element) {
-        int material_id;
-        int texture_id = 0;
+
+        Mesh *new_mesh = new Mesh();
 
         child = element->FirstChildElement("Material");
         stream << child->GetText() << std::endl;
-        stream >> material_id;
+        stream >> new_mesh->material_id;
+
+        // convert to zero index
+        new_mesh->material_id--;
 
         child = element->FirstChildElement("Texture");
         if (child) {
             stream << child->GetText() << std::endl;
-            stream >> texture_id;
-            textures[texture_id - 1].loadImage();
+            stream >> new_mesh->texture_id;
+
+            // convert to zero index
+            new_mesh->texture_id--;
+
+            textures[new_mesh->texture_id].loadImage();
         }
 
         child = element->FirstChildElement("Transformations");
@@ -297,13 +304,12 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         stream << child->GetText() << std::endl;
 
         int v0_id, v1_id, v2_id;
-        std::vector<Triangle *> *faces = new std::vector<Triangle *>;
 
         while (!(stream >> v0_id).eof()) {
             stream >> v1_id >> v2_id;
             Vec2f texCoord1, texCoord2, texCoord3;
 
-            if (texture_id != 0) {
+            if (new_mesh->texture_id != -1) {
                 // texcoords
                 texCoord1 = {texCoordData[v0_id - 1].x, texCoordData[v0_id - 1].y};
                 texCoord2 = {texCoordData[v1_id - 1].x, texCoordData[v1_id - 1].y};
@@ -322,26 +328,17 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
                 v3.applyTransform(transformMatrix, false);
             }
             delete[] transformMatrix;
-            transformMatrix = NULL;
+            transformMatrix = nullptr;
 
             Triangle *newobj =
-                    new Triangle(v1, v2 - v1, v3 - v1, material_id - 1, texture_id - 1,
+                    new Triangle(v1, v2, v3, new_mesh->material_id, new_mesh->texture_id,
                                  texCoord1, texCoord2, texCoord3);
 
-            newobj->minPoint.e[0] = std::min(v1.x(), std::min(v2.x(), v3.x()));
-            newobj->minPoint.e[1] = std::min(v1.y(), std::min(v2.y(), v3.y()));
-            newobj->minPoint.e[2] = std::min(v1.z(), std::min(v2.z(), v3.z()));
-
-            newobj->maxPoint.e[0] = std::max(v1.x(), std::max(v2.x(), v3.x()));
-            newobj->maxPoint.e[1] = std::max(v1.y(), std::max(v2.y(), v3.y()));
-            newobj->maxPoint.e[2] = std::max(v1.z(), std::max(v2.z(), v3.z()));
-
-
-            faces->push_back(newobj);
-            // mesh objects
-            objects.push_back(newobj);
+            new_mesh->faces.push_back(newobj);
         }
-        meshes.push_back(faces);
+
+        meshes.push_back(new_mesh);
+        objects.push_back(new_mesh);
 
         stream.clear();
         element = element->NextSiblingElement("Mesh");
@@ -381,7 +378,10 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
             transformations = "";
         }
 
-        for (auto &face : *meshes[baseMeshId]) {
+        for (auto &face : meshes[baseMeshId]->faces) {
+
+            //TODO instance calculations are wrong!
+
             Vector3D v1 = (*face).v1;
             Vector3D edge1 = (*face).edge1;
             Vector3D edge2 = (*face).edge2;
@@ -399,14 +399,6 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
                     new Triangle(v1, edge1, edge2, material_id - 1, texture_id - 1,
                                  (*face).texCoord1, (*face).texCoord2, (*face).texCoord3);
 
-            newobj->minPoint.e[0] = std::min(v1.x(), std::min(edge1.x(), edge2.x()));
-            newobj->minPoint.e[1] = std::min(v1.y(), std::min(edge1.y(), edge2.y()));
-            newobj->minPoint.e[2] = std::min(v1.z(), std::min(edge1.z(), edge2.z()));
-
-            newobj->maxPoint.e[0] = std::max(v1.x(), std::max(edge1.x(), edge2.x()));
-            newobj->maxPoint.e[1] = std::max(v1.y(), std::max(edge1.y(), edge2.y()));
-            newobj->maxPoint.e[2] = std::max(v1.z(), std::max(edge1.z(), edge2.z()));
-
             objects.push_back(newobj);
         }
         if (transformMatrix) {
@@ -415,12 +407,6 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         }
         element = element->NextSiblingElement("MeshInstance");
     }
-
-    // deallocate mesh vectors
-    for (auto &mesh : meshes) {
-        delete mesh;
-    }
-    meshes.clear();
 
     stream.clear();
 
@@ -463,12 +449,11 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
             texCoord3 = {texCoordData[v2_id - 1].x, texCoordData[v2_id - 1].y};
         }
         Triangle *newobj = new Triangle(
-                vertex_data[v0_id - 1], vertex_data[v1_id - 1] - vertex_data[v0_id - 1],
-                vertex_data[v2_id - 1] - vertex_data[v0_id - 1], material_id - 1,
-                texture_id - 1, texCoord1, texCoord2, texCoord3);
+                vertex_data[v0_id - 1], vertex_data[v1_id - 1], vertex_data[v2_id - 1],
+                material_id - 1, texture_id - 1, texCoord1, texCoord2, texCoord3);
 
         // apply transformations if there exists
-        if (transformations != "") {
+        if (!transformations.empty()) {
             float *transformMatrix = createTransformMatrix(
                     t_translation, t_rotation, t_scaling, false, transformations);
 
@@ -494,13 +479,16 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     element = element->FirstChildElement("Sphere");
     while (element) {
         int material_id;
-        int texture_id = 0;
+        int texture_id = -1;
         int center_vertex_id;
         float radius;
 
         child = element->FirstChildElement("Material");
         stream << child->GetText() << std::endl;
         stream >> material_id;
+
+        // convert to zero index
+        material_id--;
 
         child = element->FirstChildElement("Center");
         stream << child->GetText() << std::endl;
@@ -514,7 +502,11 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         if (child) {
             stream << child->GetText() << std::endl;
             stream >> texture_id;
-            textures[texture_id - 1].loadImage();
+
+            // convert to zero index
+            texture_id--;
+
+            textures[texture_id].loadImage();
         }
         child = element->FirstChildElement("Transformations");
         if (child) {
@@ -523,9 +515,9 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
             transformations = "";
         }
         Sphere *newobj = new Sphere(vertex_data[center_vertex_id - 1], radius,
-                                    material_id - 1, texture_id - 1);
+                                    material_id, texture_id);
 
-        if (transformations != "") {
+        if (!transformations.empty()) {
             newobj->transformMatrix = createTransformMatrix(
                     t_translation, t_rotation, t_scaling, false, transformations);
             newobj->invTransformMatrix = createTransformMatrix(
@@ -543,11 +535,6 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         element = element->NextSiblingElement("Sphere");
     }
 
-    BVH* root_bvh = new BVH(objects.data(), objects.size());
-
-    std::vector<Object *> bvh_obj;
-    bvh_obj.push_back(root_bvh);
-
-    objects = bvh_obj;
-
+    // create root BVH
+    root_bvh = new BVH(objects.data(), objects.size());
 }
