@@ -338,7 +338,10 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         }
 
         meshes.push_back(new_mesh);
-        objects.push_back(new_mesh);
+
+        // construct bvh for this mesh
+        BVH *mesh_bvh = new BVH((Object**) new_mesh->faces.data(), new_mesh->faces.size());
+        objects.push_back(mesh_bvh);
 
         stream.clear();
         element = element->NextSiblingElement("Mesh");
