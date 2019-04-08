@@ -20,15 +20,15 @@ public:
         texture_id = t;
     }
 
-    bool bounding_box(float t0, float t1, BBox& box) override {
+    bool bounding_box(float t0, float t1, BBox &box) override {
         box = BBox(center - Vector3D(r, r, r), center + Vector3D(r, r, r));
         return true;
     }
 
     bool intersects(const Ray &ray, float tmin, float tmax, HitRecord &hit_record, bool backfaceCulling) override {
 
-        Vector3D newOrigin = ray.origin();
-        Vector3D newDirection = ray.direction();
+        Vector3D newOrigin = ray.origin;
+        Vector3D newDirection = ray.direction;
 
         if (invTransformMatrix) {
             newDirection.applyTransform(invTransformMatrix, true);
@@ -57,14 +57,14 @@ public:
         }
 
         // if a closer object is already there, this object is not visible
-        if (tmin > t0 || t0 > tmax || hit_record.t < t0)
+        if (tmin > t0 || t0 > tmax)
             return false;
         else {
             hit_record.t = t0;
-
             hit_record.intersection_point = newOrigin + newDirection * hit_record.t;
-
             hit_record.normal = (hit_record.intersection_point - center).normalize();
+            hit_record.material_id = material_id;
+            hit_record.texture_id = texture_id;
 
             if (texture_id != -1) {
                 Vector3D relative = hit_record.intersection_point - center;
@@ -79,9 +79,6 @@ public:
                 hit_record.normal.applyTransform(invTransposeTransformMatrix, true);
                 hit_record.normal.normalize();
             }
-
-            hit_record.material_id = material_id;
-            hit_record.texture_id = texture_id;
 
             return true;
         }

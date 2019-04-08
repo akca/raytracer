@@ -80,15 +80,15 @@ void read_jpeg(const char *filename, unsigned char *image, int width,
     jpeg_destroy_decompress(&cinfo);
 }
 
-void write_jpeg(const char *filename, unsigned char *image, int width,
-                int height) {
+void write_jpeg(const char *filename, unsigned char *image, unsigned int width,
+                unsigned int height) {
     struct jpeg_compress_struct cinfo;
     struct jpeg_error_mgr jerr;
 
     FILE *outfile;
     JSAMPROW row_pointer =
             (JSAMPROW) malloc(sizeof(JSAMPLE) * width * 3); /* pointer to a row */
-    int j, k;
+    unsigned int j, k;
 
     /* create jpeg compress object */
     cinfo.err = jpeg_std_error(&jerr);

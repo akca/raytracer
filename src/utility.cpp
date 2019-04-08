@@ -1,10 +1,11 @@
+#include <cmath>
+
+#include <cmath>
+
 #include "utility.h"
 #include "vector3d.h"
 #include <algorithm>
-#include <cmath>
 #include <sstream>
-#include <string>
-#include <vector>
 
 bool quadraticSolve(const float &a, const float &b, const float &c, float &t0,
                     float &t1) {
@@ -14,7 +15,7 @@ bool quadraticSolve(const float &a, const float &b, const float &c, float &t0,
     if (delta < 0) {
         return false; // no soln
     } else {
-        float q = (b > 0) ? (b + sqrtf(delta)) * -0.5 : (b - sqrtf(delta)) * -0.5;
+        float q = (b > 0) ? (b + sqrtf(delta)) * -0.5f : (b - sqrtf(delta)) * -0.5f;
         t0 = q / a;
         t1 = c / q;
     }
@@ -34,7 +35,7 @@ float det33(float a, float b, float c, float d, float e, float f, float g,
     return a * (e * i - h * f) + b * (g * f - d * i) + c * (d * h - e * g);
 }
 
-void mmul44(float *i, float *j, float *k) {
+void mmul44(const float *i, const float *j, float *k) {
     float result[16];
 
     for (int x = 0; x < 4; x++) {   // rows
@@ -64,12 +65,12 @@ void zeroFill(float matrix[]) {
 float *createTransformMatrix(std::vector<Vec3f> &t_translation,
                              std::vector<Vec4f> &t_rotation,
                              std::vector<Vec3f> &t_scaling, bool inverse,
-                             std::string transformations) {
+                             const std::string &transformations) {
 
-    if (transformations == "")
-        return NULL;
+    if (transformations.empty())
+        return nullptr;
 
-    float *transformMatrix = new float[16];
+    auto transformMatrix = new float[16];
 
     zeroFill(transformMatrix);
 
@@ -117,15 +118,14 @@ float *createTransformMatrix(std::vector<Vec3f> &t_translation,
             float mincoord = std::min({u.x(), u.y(), u.z()});
             Vector3D v;
 
-            if (fabs(u.x() - mincoord) < 1e-5) {
+            if (std::fabs(u.x() - mincoord) < 1e-5) {
                 v = Vector3D(0, -u.z(), u.y());
-            } else if (fabs(u.y() - mincoord) < 1e-5) {
+            } else if (std::fabs(u.y() - mincoord) < 1e-5) {
                 v = Vector3D(-u.z(), 0, u.x());
-            } else if (fabs(u.z() - mincoord) < 1e-5) {
+            } else if (std::fabs(u.z() - mincoord) < 1e-5) {
                 v = Vector3D(-u.y(), u.x(), 0);
             } else {
-                // std::cout << "\n\n\nHHHHHHHHHHHHHHHHHH\\n\n\n\n\n\n\n";
-                return NULL;
+                return nullptr;
             }
             Vector3D w = u * v;
             float angle;
@@ -138,8 +138,8 @@ float *createTransformMatrix(std::vector<Vec3f> &t_translation,
             float Minv[16]{u.x(), v.x(), w.x(), 0, u.y(), v.y(), w.y(), 0,
                            u.z(), v.z(), w.z(), 0, 0, 0, 0, 1};
 
-            float cosa = cos(angle);
-            float sina = sin(angle);
+            float cosa = std::cos(angle);
+            float sina = std::sin(angle);
             float Rx[16]{1, 0, 0, 0, 0, cosa, -sina, 0, 0, sina, cosa, 0, 0, 0, 0, 1};
 
             if (inverse) {

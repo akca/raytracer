@@ -1,11 +1,11 @@
 #include "../include/ppm.h"
 #include <stdexcept>
 
-void write_ppm(const char *filename, unsigned char *data, int width,
+void write_ppm(const char *filename, const unsigned char *data, int width,
                int height) {
     FILE *outfile;
 
-    if ((outfile = fopen(filename, "w")) == NULL) {
+    if ((outfile = fopen(filename, "w")) == nullptr) {
         throw std::runtime_error(
                 "Error: The ppm file cannot be opened for writing.");
     }

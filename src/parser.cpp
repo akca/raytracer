@@ -1,13 +1,7 @@
 #include "../include/parser.h"
 #include "../include/sphere.h"
-#include "../include/texture.h"
 #include "../include/tinyxml2.h"
-#include "../include/triangle.h"
-#include "../include/utility.h"
 #include <sstream>
-#include <iostream>
-#include <stdexcept>
-#include <bvh.h>
 
 void parser::Scene::loadFromXml(const std::string &filepath) {
     tinyxml2::XMLDocument file;
@@ -21,7 +15,6 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
 
     auto root = file.FirstChild();
     if (!root) {
-        std::stringstream stream;
         throw std::runtime_error("Error: Root is not found.");
     }
 
@@ -205,7 +198,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
                 stream >> app;
             }
 
-            textures.push_back(Texture(name, intpol, decal, app));
+            textures.emplace_back(name, intpol, decal, app);
             element = element->NextSiblingElement("Texture");
         }
     }
@@ -290,7 +283,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
 
         child = element->FirstChildElement("Transformations");
 
-        float *transformMatrix = NULL;
+        float *transformMatrix = nullptr;
         if (child) {
             transformations = child->GetText();
             transformMatrix = createTransformMatrix(
@@ -330,17 +323,16 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
             delete[] transformMatrix;
             transformMatrix = nullptr;
 
-            Triangle *newobj =
-                    new Triangle(v1, v2, v3, new_mesh->material_id, new_mesh->texture_id,
-                                 texCoord1, texCoord2, texCoord3);
+            auto *new_triangle = new Triangle(v1, v2, v3, new_mesh->material_id, new_mesh->texture_id,
+                                              texCoord1, texCoord2, texCoord3);
 
-            new_mesh->faces.push_back(newobj);
+            new_mesh->faces.push_back(new_triangle);
         }
 
         meshes.push_back(new_mesh);
 
         // construct bvh for this mesh
-        BVH *mesh_bvh = new BVH((Object**) new_mesh->faces.data(), new_mesh->faces.size());
+        BVH *mesh_bvh = new BVH((Object **) new_mesh->faces.data(), new_mesh->faces.size());
         objects.push_back(mesh_bvh);
 
         stream.clear();
@@ -371,7 +363,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
 
         child = element->FirstChildElement("Transformations");
 
-        float *transformMatrix = NULL;
+        float *transformMatrix = nullptr;
 
         if (child) {
             transformations = child->GetText();
@@ -398,15 +390,13 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
                 edge1 = edge1 - v1;
                 edge2 = edge2 - v1;
             }
-            Triangle *newobj =
-                    new Triangle(v1, edge1, edge2, material_id - 1, texture_id - 1,
-                                 (*face).texCoord1, (*face).texCoord2, (*face).texCoord3);
+            auto *new_triangle = new Triangle(v1, edge1, edge2, material_id - 1, texture_id - 1,
+                                              (*face).texCoord1, (*face).texCoord2, (*face).texCoord3);
 
-            objects.push_back(newobj);
+            objects.push_back(new_triangle);
         }
         if (transformMatrix) {
             delete[] transformMatrix;
-            transformMatrix = NULL;
         }
         element = element->NextSiblingElement("MeshInstance");
     }
@@ -451,28 +441,28 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
             texCoord2 = {texCoordData[v1_id - 1].x, texCoordData[v1_id - 1].y};
             texCoord3 = {texCoordData[v2_id - 1].x, texCoordData[v2_id - 1].y};
         }
-        Triangle *newobj = new Triangle(
-                vertex_data[v0_id - 1], vertex_data[v1_id - 1], vertex_data[v2_id - 1],
-                material_id - 1, texture_id - 1, texCoord1, texCoord2, texCoord3);
+
+        auto *new_triangle = new Triangle(vertex_data[v0_id - 1], vertex_data[v1_id - 1], vertex_data[v2_id - 1],
+                                          material_id - 1, texture_id - 1, texCoord1, texCoord2, texCoord3);
 
         // apply transformations if there exists
         if (!transformations.empty()) {
             float *transformMatrix = createTransformMatrix(
                     t_translation, t_rotation, t_scaling, false, transformations);
 
-            newobj->edge1 = newobj->edge1 + newobj->v1;
-            newobj->edge2 = newobj->edge2 + newobj->v1;
-            newobj->v1.applyTransform(transformMatrix, false);
-            newobj->edge1.applyTransform(transformMatrix, false);
-            newobj->edge2.applyTransform(transformMatrix, false);
-            newobj->edge1 = newobj->edge1 - newobj->v1;
-            newobj->edge2 = newobj->edge2 - newobj->v1;
-            newobj->normal = (newobj->edge1 * newobj->edge2).normalize();
+            new_triangle->edge1 = new_triangle->edge1 + new_triangle->v1;
+            new_triangle->edge2 = new_triangle->edge2 + new_triangle->v1;
+            new_triangle->v1.applyTransform(transformMatrix, false);
+            new_triangle->edge1.applyTransform(transformMatrix, false);
+            new_triangle->edge2.applyTransform(transformMatrix, false);
+            new_triangle->edge1 = new_triangle->edge1 - new_triangle->v1;
+            new_triangle->edge2 = new_triangle->edge2 - new_triangle->v1;
+            new_triangle->normal = (new_triangle->edge1 * new_triangle->edge2).normalize();
 
             delete[] transformMatrix;
         }
 
-        objects.push_back(newobj);
+        objects.push_back(new_triangle);
 
         element = element->NextSiblingElement("Triangle");
     }
@@ -517,24 +507,24 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         } else {
             transformations = "";
         }
-        Sphere *newobj = new Sphere(vertex_data[center_vertex_id - 1], radius,
-                                    material_id, texture_id);
+
+        auto *new_sph = new Sphere(vertex_data[center_vertex_id - 1], radius, material_id, texture_id);
 
         if (!transformations.empty()) {
-            newobj->transformMatrix = createTransformMatrix(
+            new_sph->transformMatrix = createTransformMatrix(
                     t_translation, t_rotation, t_scaling, false, transformations);
-            newobj->invTransformMatrix = createTransformMatrix(
+            new_sph->invTransformMatrix = createTransformMatrix(
                     t_translation, t_rotation, t_scaling, true, transformations);
 
             for (int x = 0; x < 4; x++) {
                 for (int y = 0; y < 4; y++) {
-                    newobj->invTransposeTransformMatrix[x + 4 * y] =
-                            newobj->invTransformMatrix[y + 4 * x];
+                    new_sph->invTransposeTransformMatrix[x + 4 * y] =
+                            new_sph->invTransformMatrix[y + 4 * x];
                 }
             }
         }
 
-        objects.push_back(newobj);
+        objects.push_back(new_sph);
         element = element->NextSiblingElement("Sphere");
     }
 

@@ -1,5 +1,4 @@
 #include "../include/parser.h"
-#include <iostream>
 #include <thread>
 #include <algorithm>
 

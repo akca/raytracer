@@ -8,10 +8,14 @@ public:
     float e[3];
 
     inline float x() const { return e[0]; }
+
     inline float y() const { return e[1]; }
+
     inline float z() const { return e[2]; }
+
     inline float operator[](int i) const { return e[i]; }
-    inline float& operator[](int i) { return e[i]; };
+
+    inline float &operator[](int i) { return e[i]; };
 
     float getLength() const { return sqrtf(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]); }
 

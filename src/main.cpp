@@ -2,7 +2,6 @@
 #include <thread>
 #include <shade.h>
 #include <ppm.h>
-#include <bvh.h>
 
 int main(int argc, char *argv[]) {
     parser::Scene scene;
@@ -36,12 +35,12 @@ int main(int argc, char *argv[]) {
                 endHeight += partition;
             }
         }
+
         for (std::thread &t1 : threads) {
             t1.join();
         }
-        threads.clear();
 
-        // trace(&scene, &camera, 0, height, width, height, image);
+        threads.clear();
 
         write_ppm((camera.image_name).c_str(), image, width, height);
         delete[] image;

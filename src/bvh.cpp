@@ -5,7 +5,6 @@ bool BVH::bounding_box(float t0, float t1, BBox &box) {
     return true;
 }
 
-
 bool BVH::intersects(const Ray &ray, float tmin, float tmax, HitRecord &hit_record, bool backfaceCulling) {
 
     if (!bbox.rayIntersect(ray, tmin, tmax)) {
@@ -31,7 +30,6 @@ bool BVH::intersects(const Ray &ray, float tmin, float tmax, HitRecord &hit_reco
         return true;
     } else
         return false;
-
 }
 
 int box_x_compare(const void *a, const void *b) {
@@ -70,7 +68,7 @@ int box_z_compare(const void *a, const void *b) {
         return 1;
 }
 
-BVH::BVH(Object **shapes, int num_shapes) {
+BVH::BVH(Object **shapes, size_t num_shapes) {
 
     int axis = int(3 * drand48());
     if (axis == 0)

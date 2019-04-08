@@ -1,3 +1,11 @@
+#include <cmath>
+
+#include <cmath>
+
+#include <cmath>
+
+#include <cmath>
+
 #ifndef TEXTURE_H__
 #define TEXTURE_H__
 
@@ -22,7 +30,7 @@ private:
     Interpolation interpolation;
     DecalMode decalMode;
     Appereance appereance;
-    unsigned char *image = NULL;
+    unsigned char *image = nullptr;
     int width;
     int height;
 
@@ -51,7 +59,7 @@ public:
     }
 
     void loadImage() {
-        if (image == NULL) {
+        if (image == nullptr) {
             read_jpeg_header(imageName.c_str(), width, height);
             image = new unsigned char[width * height * 3];
             read_jpeg(imageName.c_str(), image, width, height);
@@ -82,16 +90,16 @@ public:
                 break;
             case REPEAT:
                 if (x > 1.0f || x < 0.0f)
-                    x = x - floor(x);
+                    x = x - std::floor(x);
                 if (y > 1.0f || y < 0.0f)
-                    y = y - floor(y);
+                    y = y - std::floor(y);
                 break;
         }
         x *= width;
         y *= height;
 
-        int p = floor(x);
-        int q = floor(y);
+        int p = std::floor(x);
+        int q = std::floor(y);
 
         int index = (p + q * width) * 3;
         int index2 = index + 3 * width;

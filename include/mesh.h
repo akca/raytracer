@@ -10,11 +10,7 @@ class Mesh : public Object {
 public:
     std::vector<Triangle *> faces;
 
-    Mesh() {}
-
-    Mesh(std::vector<Triangle *> face_vector)
-            : faces(std::move(face_vector)) {
-    }
+    Mesh() = default;
 
     bool bounding_box(float t0, float t1, BBox &box) override {
 
@@ -44,8 +40,8 @@ public:
         bool hit_anything = false;
         float closest_so_far = tmax;
 
-        for (size_t i = 0; i < faces.size(); i++) {
-            if (faces[i]->intersects(ray, tmin, closest_so_far, temp_rec, backfaceCulling)) {
+        for (auto &face : faces) {
+            if (face->intersects(ray, tmin, closest_so_far, temp_rec, backfaceCulling)) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
                 hit_record = temp_rec;

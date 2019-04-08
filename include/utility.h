@@ -28,13 +28,13 @@ float det33(float a, float b, float c, float d, float e, float f, float g,
 
 float det44(float i[4][4], float j[4][4], float k[4][4]);
 
-void mmul44(float *i, float *j, float *k);
+void mmul44(const float *i, const float *j, float *k);
 
 void zeroFill(float matrix[]);
 
 float *createTransformMatrix(std::vector<Vec3f> &t_translation,
                              std::vector<Vec4f> &t_rotation,
                              std::vector<Vec3f> &t_scaling, bool inverse,
-                             std::string transformations);
+                             const std::string &transformations);
 
 #endif
