@@ -86,6 +86,12 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         stream >> camera.image_width >> camera.image_height;
         stream >> camera.image_name;
 
+        child = element->FirstChildElement("NumSamples");
+        if (child) {
+            stream << child->GetText() << std::endl;
+            stream >> camera.num_samples;
+        }
+
         camera.gaze.normalize();
         camera.right = (camera.gaze * camera.up).normalize();
         camera.up = camera.right * camera.gaze;

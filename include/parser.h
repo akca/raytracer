@@ -23,6 +23,7 @@ namespace parser {
         Vec4f near_plane;
         float near_distance;
         int image_width, image_height;
+        int num_samples = 1;
         std::string image_name;
     };
 

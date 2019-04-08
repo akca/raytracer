@@ -1,6 +1,7 @@
 #include "../include/parser.h"
 #include <thread>
 #include <algorithm>
+#include <random>
 
 const float kRefractionBias = 0.0001f;
 
@@ -246,20 +247,49 @@ void trace(parser::Scene *scene, parser::Camera *camera, int startHeight,
     float nearPlaneWidth = camera->near_plane.y - camera->near_plane.x;
     float nearPlaneHeight = camera->near_plane.w - camera->near_plane.z;
 
+    // set-up random device
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+
+    // iterate over pixels
     for (int y = startHeight; y < endHeight; ++y) {
         for (int x = 0; x < imageWidth; ++x) {
 
-            float pixelPositionX = nearPlaneWidth * (x + 0.5f) / imageWidth;   // su
-            float pixelPositionY = nearPlaneHeight * (y + 0.5f) / imageHeight; // sv
+            Vector3D pixelColor;
 
-            Vector3D pixelPosition = camera->planeStartPoint +
-                                     (camera->right * pixelPositionX) -
-                                     (camera->up * pixelPositionY);
+            // jittered sampling for antialiasing
+            for (int p = 0; p < camera->num_samples; p++) {
+                for (int q = 0; q < camera->num_samples; q++) {
 
-            Vector3D direction = pixelPosition - camera->position;
-            direction.normalize();
+                    float pixelPositionX, pixelPositionY;
 
-            Vector3D pixelColor = shade(*scene, camera->position, direction, true, 0);
+                    if (camera->num_samples > 1) {
+                        pixelPositionX =
+                                nearPlaneWidth * (x + (p + dist(mt)) / camera->num_samples)
+                                / imageWidth;  // su
+
+                        pixelPositionY =
+                                nearPlaneHeight * (y + (q + dist(mt)) / camera->num_samples)
+                                / imageHeight; // sv
+                    } else {
+                        pixelPositionX = nearPlaneWidth * (x + 0.5f) / imageWidth;   // su
+                        pixelPositionY = nearPlaneHeight * (y + 0.5f) / imageHeight; // sv
+                    }
+
+                    Vector3D pixelPosition = camera->planeStartPoint +
+                                             (camera->right * pixelPositionX) -
+                                             (camera->up * pixelPositionY);
+
+                    Vector3D direction = pixelPosition - camera->position;
+                    direction.normalize();
+
+                    pixelColor = pixelColor + shade(*scene, camera->position, direction, true, 0);
+
+                }
+            }
+
+            pixelColor = pixelColor / pow(camera->num_samples, 2);
 
             image[i++] = (unsigned char) std::min((int) std::round(pixelColor.x()), 255); // r
             image[i++] = (unsigned char) std::min((int) std::round(pixelColor.y()), 255); // g
