@@ -3,6 +3,7 @@
 
 #include "parser.h"
 #include "object.h"
+#include "camera.h"
 #include "vector3d.h"
 
 Vector3D reflect(const Vector3D &I, const Vector3D &N);
@@ -11,9 +12,9 @@ Vector3D refract(const Vector3D &I, const Vector3D &N, const float &refraction_i
 
 void fresnel(const Vector3D &I, const Vector3D &N, const float &ior, float &kr);
 
-Vector3D shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, bool backfaceCulling, int recursionDepth);
+Vector3D shade(parser::Scene &scene, Ray &ray, bool backfaceCulling, int recursionDepth);
 
-void trace(parser::Scene *scene, parser::Camera *camera, int startHeight,
+void trace(parser::Scene *scene, Camera *camera, int startHeight,
            int endHeight, int imageWidth, int imageHeight,
            unsigned char *image);
 

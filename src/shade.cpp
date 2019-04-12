@@ -77,7 +77,7 @@ void fresnel(const Vector3D &I, const Vector3D &N, const float &ior, float &kr) 
 }
 
 Vector3D
-shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, bool backfaceCulling, int recursionDepth) {
+shade(parser::Scene &scene, Ray &ray, bool backfaceCulling, int recursionDepth) {
 
     if (recursionDepth > scene.max_recursion_depth)
         return Vector3D(scene.background_color);
@@ -88,9 +88,9 @@ shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, bool backf
     HitRecord hit_record;
 
     // if intersection with an object found
-    if (scene.root_bvh->intersects(Ray(rayOrigin, direction), tmin, tmax, hit_record, backfaceCulling)) {
+    if (scene.root_bvh->intersects(ray, tmin, tmax, hit_record, backfaceCulling)) {
 
-        hit_record.intersection_point = rayOrigin + direction * hit_record.t;
+        hit_record.intersection_point = ray.origin + ray.direction * hit_record.t;
 
         Vector3D &kAmbient = scene.materials[hit_record.material_id].ambient;
 
@@ -159,7 +159,7 @@ shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, bool backf
                 if (!isReplaceAll) {
 
                     // for specular
-                    Vector3D halfVector = (wi + direction.inverse()).normalize();
+                    Vector3D halfVector = (wi + ray.direction.inverse()).normalize();
 
                     float costheta_spec = std::max(float(0), hit_record.normal.dotProduct(halfVector));
 
@@ -178,12 +178,14 @@ shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, bool backf
 
         if ((kMirror.x() + kMirror.y() + kMirror.z() > 0.001f)) {
 
-            Vector3D reflection_direction = reflect(direction, hit_record.normal);
+            const Vector3D reflection_direction = reflect(ray.direction, hit_record.normal);
 
-            Vector3D ray_origin_with_epsilon =
+            const Vector3D ray_origin_with_epsilon =
                     hit_record.intersection_point + reflection_direction * scene.shadow_ray_epsilon;
 
-            pixelColor = pixelColor + kMirror.multiply(shade(scene, ray_origin_with_epsilon, reflection_direction,
+            Ray reflection_ray = Ray(ray_origin_with_epsilon, reflection_direction);
+
+            pixelColor = pixelColor + kMirror.multiply(shade(scene, reflection_ray,
                                                              backfaceCulling,
                                                              recursionDepth + 1));
         }
@@ -199,23 +201,28 @@ shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, bool backf
             const float &kRefraction = scene.materials[hit_record.material_id].refraction_index;
 
             // compute fresnel
-            fresnel(direction, hit_record.normal, kRefraction, kr);
-            bool is_outside = direction.dotProduct(hit_record.normal) < 0;
+            fresnel(ray.direction, hit_record.normal, kRefraction, kr);
+            bool is_outside = ray.direction.dotProduct(hit_record.normal) < 0;
             Vector3D bias = hit_record.normal * kRefractionBias;
 
             // compute refraction if it is not a case of total internal reflection
             if (kr < 1) {
-                Vector3D refractionDirection = refract(direction, hit_record.normal, kRefraction).normalize();
+                Vector3D refractionDirection = refract(ray.direction, hit_record.normal, kRefraction).normalize();
                 Vector3D refractionRayOrigin = is_outside ? hit_record.intersection_point - bias :
                                                hit_record.intersection_point + bias;
-                refractionColor = shade(scene, refractionRayOrigin, refractionDirection, !is_outside,
-                                        recursionDepth + 1);
+
+                Ray refraction_ray = Ray(refractionRayOrigin, refractionDirection);
+
+                refractionColor = shade(scene, refraction_ray, !is_outside, recursionDepth + 1);
             }
 
-            Vector3D reflectionDirection = reflect(direction, hit_record.normal);
+            Vector3D reflectionDirection = reflect(ray.direction, hit_record.normal);
             Vector3D reflectionRayOrigin = is_outside ? hit_record.intersection_point + bias :
                                            hit_record.intersection_point - bias;
-            reflectionColor = shade(scene, reflectionRayOrigin, reflectionDirection, false, recursionDepth + 1);
+
+            Ray reflection_ray = Ray(reflectionRayOrigin, reflectionDirection);
+
+            reflectionColor = shade(scene, reflection_ray, false, recursionDepth + 1);
 
             if (!is_outside) {
                 // if the ray is inside, attenuation is applied
@@ -238,14 +245,11 @@ shade(parser::Scene &scene, Vector3D &rayOrigin, Vector3D &direction, bool backf
     return pixelColor;
 }
 
-void trace(parser::Scene *scene, parser::Camera *camera, int startHeight,
+void trace(parser::Scene *scene, Camera *camera, int startHeight,
            int endHeight, int imageWidth, int imageHeight,
            unsigned char *image) {
 
     int i = startHeight * imageWidth * 3;
-
-    float nearPlaneWidth = camera->near_plane.y - camera->near_plane.x;
-    float nearPlaneHeight = camera->near_plane.w - camera->near_plane.z;
 
     // set-up random device
     std::random_device rd;
@@ -258,38 +262,34 @@ void trace(parser::Scene *scene, parser::Camera *camera, int startHeight,
 
             Vector3D pixelColor;
 
+            int sqrtSamples = sqrt(camera->num_samples);
+
             // jittered sampling for antialiasing
-            for (int p = 0; p < camera->num_samples; p++) {
-                for (int q = 0; q < camera->num_samples; q++) {
+            for (int p = 0; p < sqrtSamples; p++) {
+                for (int q = 0; q < sqrtSamples; q++) {
 
                     float pixelPositionX, pixelPositionY;
 
                     if (camera->num_samples > 1) {
-                        pixelPositionX =
-                                nearPlaneWidth * (x + (p + dist(mt)) / camera->num_samples)
-                                / imageWidth;  // su
+                        pixelPositionX = (x + (p + dist(mt)) / sqrtSamples)
+                                         / imageWidth;  // su
 
-                        pixelPositionY =
-                                nearPlaneHeight * (y + (q + dist(mt)) / camera->num_samples)
-                                / imageHeight; // sv
+                        pixelPositionY = (y + (q + dist(mt)) / sqrtSamples)
+                                         / imageHeight; // sv
                     } else {
-                        pixelPositionX = nearPlaneWidth * (x + 0.5f) / imageWidth;   // su
-                        pixelPositionY = nearPlaneHeight * (y + 0.5f) / imageHeight; // sv
+                        pixelPositionX = (x + 0.5f) / imageWidth;   // su
+                        pixelPositionY = (y + 0.5f) / imageHeight; // sv
                     }
 
-                    Vector3D pixelPosition = camera->planeStartPoint +
-                                             (camera->right * pixelPositionX) -
-                                             (camera->up * pixelPositionY);
+                    Ray ray;
 
-                    Vector3D direction = pixelPosition - camera->position;
-                    direction.normalize();
+                    camera->createRay(Vec2f(pixelPositionX, pixelPositionY), ray);
 
-                    pixelColor = pixelColor + shade(*scene, camera->position, direction, true, 0);
-
+                    pixelColor = pixelColor + shade(*scene, ray, true, 0);
                 }
             }
 
-            pixelColor = pixelColor / pow(camera->num_samples, 2);
+            pixelColor = pixelColor / camera->num_samples;
 
             image[i++] = (unsigned char) std::min((int) std::round(pixelColor.x()), 255); // r
             image[i++] = (unsigned char) std::min((int) std::round(pixelColor.y()), 255); // g

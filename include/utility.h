@@ -10,6 +10,10 @@ struct Vec3i {
 
 struct Vec2f {
     float x = 0, y = 0;
+
+    Vec2f() = default;
+
+    Vec2f(float x, float y) : x(x), y(y) {}
 };
 
 struct Vec3f {

@@ -2,6 +2,7 @@
 #include <thread>
 #include <shade.h>
 #include <ppm.h>
+#include <camera.h>
 
 int main(int argc, char *argv[]) {
     parser::Scene scene;
@@ -11,11 +12,11 @@ int main(int argc, char *argv[]) {
     using std::endl;
     using std::thread;
 
-    for (parser::Camera camera : scene.cameras) {
-        std::cout << "RENDERING STARTED: " << camera.image_name << std::endl;
+    for (Camera *camera: scene.cameras) {
+        std::cout << "RENDERING STARTED: " << camera->image_name << std::endl;
 
-        int width = camera.image_width;
-        int height = camera.image_height;
+        int width = camera->image_width;
+        int height = camera->image_height;
 
         auto *image = new unsigned char[width * height * 3];
 
@@ -26,7 +27,7 @@ int main(int argc, char *argv[]) {
         std::vector<thread> threads;
 
         for (size_t i = 0; i < threadCount; i++) {
-            threads.emplace_back(trace, &scene, &camera, startHeight, endHeight,
+            threads.emplace_back(trace, &scene, camera, startHeight, endHeight,
                                  width, height, image);
             startHeight = endHeight;
             if (i >= threadCount - 2) {
@@ -42,7 +43,7 @@ int main(int argc, char *argv[]) {
 
         threads.clear();
 
-        write_ppm((camera.image_name).c_str(), image, width, height);
+        write_ppm((camera->image_name).c_str(), image, width, height);
         delete[] image;
     }
 

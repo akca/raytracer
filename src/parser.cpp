@@ -60,15 +60,24 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     element = element->FirstChildElement("Camera");
     while (element) {
 
-        Camera camera;
+        Vector3D position;
+        Vector3D up;
+        float near_distance;
+        float focus_distance = 1;
+        float aperture = 0;
+        int fov_y = 1;
+        int num_samples = 1;
+        std::string image_name;
+        int image_width;
+        int image_height;
+        Vec4f near_plane;
+        Vector3D plane_start_point;
+        Vector3D gaze;
+        Vector3D gaze_point;
 
         auto child = element->FirstChildElement("Position");
         stream << child->GetText() << std::endl;
-        child = element->FirstChildElement("Gaze");
-        stream << child->GetText() << std::endl;
         child = element->FirstChildElement("Up");
-        stream << child->GetText() << std::endl;
-        child = element->FirstChildElement("NearPlane");
         stream << child->GetText() << std::endl;
         child = element->FirstChildElement("NearDistance");
         stream << child->GetText() << std::endl;
@@ -77,29 +86,61 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         child = element->FirstChildElement("ImageName");
         stream << child->GetText() << std::endl;
 
-        stream >> camera.position.e[0] >> camera.position.e[1] >> camera.position.e[2];
-        stream >> camera.gaze.e[0] >> camera.gaze.e[1] >> camera.gaze.e[2];
-        stream >> camera.up.e[0] >> camera.up.e[1] >> camera.up.e[2];
-        stream >> camera.near_plane.x >> camera.near_plane.y >>
-               camera.near_plane.z >> camera.near_plane.w;
-        stream >> camera.near_distance;
-        stream >> camera.image_width >> camera.image_height;
-        stream >> camera.image_name;
+        stream >> position.e[0] >> position.e[1] >> position.e[2];
+        stream >> up.e[0] >> up.e[1] >> up.e[2];
+        stream >> near_distance;
+        stream >> image_width >> image_height;
+        stream >> image_name;
 
         child = element->FirstChildElement("NumSamples");
         if (child) {
             stream << child->GetText() << std::endl;
-            stream >> camera.num_samples;
+            stream >> num_samples;
         }
 
-        camera.gaze.normalize();
-        camera.right = (camera.gaze * camera.up).normalize();
-        camera.up = camera.right * camera.gaze;
-        camera.centerOfPlane = camera.position + camera.gaze * camera.near_distance;
-        camera.planeStartPoint = camera.centerOfPlane +
-                                 (camera.right * camera.near_plane.x) +
-                                 (camera.up * camera.near_plane.w);
-        cameras.push_back(camera);
+        child = element->FirstChildElement("FocusDistance");
+        if (child) {
+            stream << child->GetText() << std::endl;
+            stream >> focus_distance;
+        }
+
+        child = element->FirstChildElement("ApertureSize");
+        if (child) {
+            stream << child->GetText() << std::endl;
+            stream >> aperture;
+        }
+
+
+        if (element->Attribute("type") && std::strcmp(element->Attribute("type"), "lookAt") == 0) {
+            child = element->FirstChildElement("GazePoint");
+            stream << child->GetText() << std::endl;
+            stream >> gaze_point.e[0] >> gaze_point.e[1] >> gaze_point.e[2];
+            auto *camera = new LookAtCamera(position, up, near_distance, fov_y, num_samples, image_name, image_width,
+                                            image_height, gaze_point);
+
+            camera->focus_distance = focus_distance;
+            camera->aperture = aperture;
+            cameras.push_back(camera);
+
+        } else {
+            child = element->FirstChildElement("Gaze");
+            stream << child->GetText() << std::endl;
+            stream >> gaze.e[0] >> gaze.e[1] >> gaze.e[2];
+            gaze.normalize();
+
+            child = element->FirstChildElement("NearPlane");
+            stream << child->GetText() << std::endl;
+            stream >> near_plane.x >> near_plane.y >> near_plane.z >> near_plane.w;
+
+            auto *camera = new StdCamera(position, up, near_distance, fov_y, num_samples, image_name, image_width,
+                                         image_height, near_plane, plane_start_point, gaze);
+
+            camera->focus_distance = focus_distance;
+            camera->aperture = aperture;
+            cameras.push_back(camera);
+        }
+
+
         element = element->NextSiblingElement("Camera");
     }
 

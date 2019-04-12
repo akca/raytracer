@@ -2,6 +2,7 @@
 #define VECTOR3D_H__
 
 #include <cmath>
+#include "utility.h"
 
 class Vector3D {
 public:

@@ -1,6 +1,7 @@
 #ifndef __RAYTRACER__PARSER__
 #define __RAYTRACER__PARSER__
 
+#include "camera.h"
 #include "object.h"
 #include "texture.h"
 #include "triangle.h"
@@ -12,20 +13,6 @@
 #include <vector>
 
 namespace parser {
-
-    struct Camera {
-        Vector3D position;
-        Vector3D gaze;
-        Vector3D up;
-        Vector3D right;
-        Vector3D centerOfPlane;
-        Vector3D planeStartPoint;
-        Vec4f near_plane;
-        float near_distance;
-        int image_width, image_height;
-        int num_samples = 1;
-        std::string image_name;
-    };
 
     struct PointLight {
         Vector3D position;
@@ -48,7 +35,7 @@ namespace parser {
         float shadow_ray_epsilon;
         float intersection_test_epsilon;
         int max_recursion_depth;
-        std::vector<Camera> cameras;
+        std::vector<Camera *> cameras;
         Vector3D ambient_light;
         std::vector<PointLight> point_lights;
         std::vector<Material> materials;
