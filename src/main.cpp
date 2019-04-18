@@ -47,8 +47,16 @@ int main(int argc, char *argv[]) {
         delete[] image;
     }
 
-    // deallocate objects
-    for (auto &obj : scene.objects) {
+    // deallocate bvh, see destructor ~BVH
+    delete scene.root_bvh;
+
+    // deallocate cameras
+    for (auto &obj : scene.cameras) {
+        delete obj;
+    }
+
+    // deallocate meshes
+    for (auto &obj : scene.meshes) {
         delete obj;
     }
 }
