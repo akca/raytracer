@@ -256,13 +256,14 @@ void trace(parser::Scene *scene, Camera *camera, int startHeight,
     std::mt19937 mt(rd());
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
+    int sqrtSamples = sqrt(camera->num_samples);
+    int sqrtSamplesSquared = sqrtSamples * sqrtSamples;
+
     // iterate over pixels
     for (int y = startHeight; y < endHeight; ++y) {
         for (int x = 0; x < imageWidth; ++x) {
 
             Vector3D pixelColor;
-
-            int sqrtSamples = sqrt(camera->num_samples);
 
             // jittered sampling for antialiasing
             for (int p = 0; p < sqrtSamples; p++) {
@@ -289,7 +290,7 @@ void trace(parser::Scene *scene, Camera *camera, int startHeight,
                 }
             }
 
-            pixelColor = pixelColor / camera->num_samples;
+            pixelColor = pixelColor / sqrtSamplesSquared;
 
             image[i++] = (unsigned char) std::min((int) std::round(pixelColor.x()), 255); // r
             image[i++] = (unsigned char) std::min((int) std::round(pixelColor.y()), 255); // g
