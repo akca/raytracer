@@ -38,6 +38,12 @@ public:
         e[2] = v.z;
     }
 
+    Vector3D(const Vec3f &v) {
+        e[0] = v.x;
+        e[1] = v.y;
+        e[2] = v.z;
+    }
+
     Vector3D(float i, float j, float k) {
         e[0] = i;
         e[1] = j;

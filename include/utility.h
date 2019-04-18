@@ -8,6 +8,10 @@ struct Vec3i {
     int x, y, z;
 };
 
+struct Vec4i {
+    int x, y, z, w;
+};
+
 struct Vec2f {
     float x = 0, y = 0;
 

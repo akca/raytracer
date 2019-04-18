@@ -1,7 +1,9 @@
 #include "../include/parser.h"
 #include "../include/sphere.h"
 #include "../include/tinyxml2.h"
+#include "../include/tinyply.h"
 #include <sstream>
+#include <fstream>
 
 void parser::Scene::loadFromXml(const std::string &filepath) {
     tinyxml2::XMLDocument file;
@@ -71,7 +73,6 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         int image_width;
         int image_height;
         Vec4f near_plane;
-        Vector3D plane_start_point;
         Vector3D gaze;
         Vector3D gaze_point;
 
@@ -98,6 +99,12 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
             stream >> num_samples;
         }
 
+        child = element->FirstChildElement("FovY");
+        if (child) {
+            stream << child->GetText() << std::endl;
+            stream >> fov_y;
+        }
+
         child = element->FirstChildElement("FocusDistance");
         if (child) {
             stream << child->GetText() << std::endl;
@@ -115,11 +122,9 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
             child = element->FirstChildElement("GazePoint");
             stream << child->GetText() << std::endl;
             stream >> gaze_point.e[0] >> gaze_point.e[1] >> gaze_point.e[2];
-            auto *camera = new LookAtCamera(position, up, near_distance, fov_y, num_samples, image_name, image_width,
-                                            image_height, gaze_point);
+            auto *camera = new LookAtCamera(position, up, near_distance, focus_distance, aperture, num_samples,
+                                            image_name, image_width, image_height, fov_y, gaze_point);
 
-            camera->focus_distance = focus_distance;
-            camera->aperture = aperture;
             cameras.push_back(camera);
 
         } else {
@@ -132,11 +137,9 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
             stream << child->GetText() << std::endl;
             stream >> near_plane.x >> near_plane.y >> near_plane.z >> near_plane.w;
 
-            auto *camera = new StdCamera(position, up, near_distance, fov_y, num_samples, image_name, image_width,
-                                         image_height, near_plane, plane_start_point, gaze);
+            auto *camera = new StdCamera(position, up, near_distance, focus_distance, aperture, num_samples, image_name,
+                                         image_width, image_height, near_plane, gaze);
 
-            camera->focus_distance = focus_distance;
-            camera->aperture = aperture;
             cameras.push_back(camera);
         }
 
@@ -343,37 +346,48 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         child = element->FirstChildElement("Faces");
         stream << child->GetText() << std::endl;
 
-        int v0_id, v1_id, v2_id;
+        const char *const ply_file = child->Attribute("plyFile");
 
-        while (!(stream >> v0_id).eof()) {
-            stream >> v1_id >> v2_id;
-            Vec2f texCoord1, texCoord2, texCoord3;
+        if (ply_file != 0) {
 
-            if (new_mesh->texture_id != -1) {
-                // texcoords
-                texCoord1 = {texCoordData[v0_id - 1].x, texCoordData[v0_id - 1].y};
-                texCoord2 = {texCoordData[v1_id - 1].x, texCoordData[v1_id - 1].y};
-                texCoord3 = {texCoordData[v2_id - 1].x, texCoordData[v2_id - 1].y};
+            parsePly(ply_file, new_mesh->material_id, new_mesh->faces);
+
+
+        } else {
+
+            int v0_id, v1_id, v2_id;
+
+            while (!(stream >> v0_id).eof()) {
+                stream >> v1_id >> v2_id;
+                Vec2f texCoord1, texCoord2, texCoord3;
+
+                if (new_mesh->texture_id != -1) {
+                    // texcoords
+                    texCoord1 = {texCoordData[v0_id - 1].x, texCoordData[v0_id - 1].y};
+                    texCoord2 = {texCoordData[v1_id - 1].x, texCoordData[v1_id - 1].y};
+                    texCoord3 = {texCoordData[v2_id - 1].x, texCoordData[v2_id - 1].y};
+                }
+
+                Vector3D v1 = vertex_data[v0_id - 1];
+                Vector3D v2 = vertex_data[v1_id - 1];
+                Vector3D v3 = vertex_data[v2_id - 1];
+
+                // apply transformations if there exists
+                if (transformMatrix) {
+
+                    v1.applyTransform(transformMatrix, false);
+                    v2.applyTransform(transformMatrix, false);
+                    v3.applyTransform(transformMatrix, false);
+                }
+                delete[] transformMatrix;
+                transformMatrix = nullptr;
+
+                auto *new_triangle = new Triangle(v1, v2, v3, new_mesh->material_id, new_mesh->texture_id,
+                                                  texCoord1, texCoord2, texCoord3);
+
+                new_mesh->faces.push_back(new_triangle);
             }
 
-            Vector3D v1 = vertex_data[v0_id - 1];
-            Vector3D v2 = vertex_data[v1_id - 1];
-            Vector3D v3 = vertex_data[v2_id - 1];
-
-            // apply transformations if there exists
-            if (transformMatrix) {
-
-                v1.applyTransform(transformMatrix, false);
-                v2.applyTransform(transformMatrix, false);
-                v3.applyTransform(transformMatrix, false);
-            }
-            delete[] transformMatrix;
-            transformMatrix = nullptr;
-
-            auto *new_triangle = new Triangle(v1, v2, v3, new_mesh->material_id, new_mesh->texture_id,
-                                              texCoord1, texCoord2, texCoord3);
-
-            new_mesh->faces.push_back(new_triangle);
         }
 
         meshes.push_back(new_mesh);

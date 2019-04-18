@@ -23,7 +23,7 @@ public:
     Triangle() = default;
 
     Triangle(Vector3D &vt1, Vector3D &vt2, Vector3D &vt3, int material, int texture,
-             Vec2f &texCoord1, Vec2f &texCoord2, Vec2f &texCoord3)
+             const Vec2f &texCoord1, const Vec2f &texCoord2, const Vec2f &texCoord3)
             : v1(vt1), edge1(vt2), edge2(vt3),
               texCoord1(texCoord1), texCoord2(texCoord2), texCoord3(texCoord3) {
 
@@ -41,6 +41,11 @@ public:
 
         material_id = material;
         texture_id = texture;
+    }
+
+    Triangle(Vector3D &vt1, Vector3D &vt2, Vector3D &vt3, int material)
+            : Triangle(vt1, vt2, vt3, material, -1, Vec2f(0, 0), Vec2f(0, 0), Vec2f(0, 0)) {
+
     }
 
     bool bounding_box(float t0, float t1, BBox &box) override {

@@ -11,10 +11,15 @@ class Camera {
 public:
     Vector3D position;
     Vector3D up;
+    Vector3D right;
+    Vector3D gaze;
+    Vector3D plane_start_point;
+    float nearPlaneWidth;
+    float nearPlaneHeight;
+    Vec4f near_plane;
     float near_distance;
     float focus_distance = 1;
-    float aperture;
-    int fov_y = 1;
+    float lens_radius; // == aperture / 2
     int num_samples = 1;
     std::string image_name;
     int image_width;
@@ -22,22 +27,22 @@ public:
     std::mt19937 mt;
     std::uniform_real_distribution<float> dist;
 
-    virtual void createRay(Vec2f pixel_position, Ray &ray) = 0;
-
     Camera() = default;
 
     Camera(
             const Vector3D &cam_pos,
             const Vector3D &up_vector,
             float near_distance,
-            int fov_y,
+            float focus_distance,
+            float aperture,
             int num_samples,
             std::string image_name,
             int image_width,
             int image_height) : position(cam_pos),
                                 up(up_vector),
                                 near_distance(near_distance),
-                                fov_y(fov_y),
+                                focus_distance(focus_distance),
+                                lens_radius(aperture / 2),
                                 num_samples(num_samples),
                                 image_name(std::move(image_name)),
                                 image_width(image_width),
@@ -45,70 +50,9 @@ public:
                                 mt((std::random_device()) ()),
                                 dist(0.0f, 1.0f) {
 
-
     };
 
-};
-
-class LookAtCamera : public Camera {
-public:
-    Vector3D gaze_point;
-
-    LookAtCamera(
-            const Vector3D &cam_pos,
-            const Vector3D &up_vector,
-            float near_distance,
-            int fov_y,
-            int num_samples,
-            const std::string &image_name,
-            int image_width,
-            int image_height,
-            const Vector3D &gaze_point) : Camera(cam_pos, up_vector, near_distance, fov_y, num_samples, image_name,
-                                                 image_width, image_height), gaze_point(gaze_point) {};
-
-    void createRay(Vec2f pixel_position, Ray &ray) override {
-
-    }
-};
-
-class StdCamera : public Camera {
-public:
-    Vec4f near_plane;
-    Vector3D plane_start_point;
-    Vector3D right;
-    Vector3D gaze;
-    float nearPlaneWidth;
-    float nearPlaneHeight;
-
-    StdCamera(
-            const Vector3D &cam_pos,
-            const Vector3D &up_vector,
-            float near_distance,
-            int fov_y,
-            int num_samples,
-            const std::string &image_name,
-            int image_width,
-            int image_height,
-            Vec4f near_plane,
-            const Vector3D &plane_start_point,
-            const Vector3D &gaze) : Camera(cam_pos, up_vector, near_distance, fov_y, num_samples, image_name,
-                                           image_width, image_height), near_plane(near_plane),
-                                    plane_start_point(plane_start_point),
-                                    gaze(gaze) {
-        right = (gaze * up).normalize();
-        up = (right * gaze).normalize();
-
-        Vector3D centerOfPlane = position + gaze * near_distance;
-        this->plane_start_point = centerOfPlane + (right * near_plane.x) + (up * near_plane.w);
-
-        nearPlaneWidth = near_plane.y - near_plane.x;
-        nearPlaneHeight = near_plane.w - near_plane.z;
-
-    };
-
-    // TODO optimize
-    void createRay(Vec2f pixel_position, Ray &ray) override {
-
+    void createRay(Vec2f pixel_position, Ray &ray) {
         pixel_position.x *= nearPlaneWidth;
         pixel_position.y *= nearPlaneHeight;
 
@@ -121,7 +65,7 @@ public:
 
         Vector3D random_in_unit_circle = Vector3D(dist(mt) * 2 - 1, dist(mt) * 2 - 1, 0);
 
-        Vector3D offset = random_in_unit_circle * aperture / 2;
+        Vector3D offset = random_in_unit_circle * lens_radius;
 
         direction = direction * focus_distance;
 
@@ -131,6 +75,85 @@ public:
 
         ray = Ray(position + offset, direction);
     }
+
+};
+
+class LookAtCamera : public Camera {
+public:
+
+    int fov_y;
+    Vector3D gaze_point;
+
+    LookAtCamera(
+            const Vector3D &cam_pos,
+            const Vector3D &up_vector,
+            float near_distance,
+            float focus_distance,
+            float aperture,
+            int num_samples,
+            const std::string &image_name,
+            int image_width,
+            int image_height,
+            int fov_y,
+            const Vector3D &gaze_point) : Camera(cam_pos, up_vector, near_distance, focus_distance, aperture,
+                                                 num_samples, image_name, image_width, image_height), fov_y(fov_y),
+                                          gaze_point(gaze_point) {
+
+        this->gaze = (gaze_point - cam_pos).normalize();
+        up.normalize();
+
+        right = (gaze * up).normalize();
+        up = (right * gaze).normalize();
+
+        Vector3D centerOfPlane = position + gaze * near_distance;
+
+        // compute nearplane
+        float verticalDist = std::tan((this->fov_y / 2.f) * (M_PI / 180.f)) * near_distance;
+        float horizontalDist = verticalDist * ((float) image_width / image_height);
+
+        this->near_plane.x = -horizontalDist; // left
+        this->near_plane.y = horizontalDist;  // right
+        this->near_plane.z = -verticalDist;   // bottom
+        this->near_plane.w = verticalDist;    // top
+
+        this->plane_start_point = centerOfPlane + (right * near_plane.x) + (up * near_plane.w);
+
+        nearPlaneWidth = near_plane.y - near_plane.x;
+        nearPlaneHeight = near_plane.w - near_plane.z;
+
+    };
+};
+
+class StdCamera : public Camera {
+public:
+
+    StdCamera(
+            const Vector3D &cam_pos,
+            const Vector3D &up_vector,
+            float near_distance,
+            float focus_distance,
+            float aperture,
+            int num_samples,
+            const std::string &image_name,
+            int image_width,
+            int image_height,
+            Vec4f near_plane,
+            const Vector3D &gaze) : Camera(cam_pos, up_vector, near_distance, focus_distance, aperture, num_samples,
+                                           image_name, image_width, image_height) {
+        this->gaze = gaze;
+        this->near_plane = near_plane;
+
+        right = (gaze * up).normalize();
+        up = (right * gaze).normalize();
+
+        Vector3D centerOfPlane = position + gaze * near_distance;
+        this->plane_start_point = centerOfPlane + (right * near_plane.x) + (up * near_plane.w);
+
+        nearPlaneWidth = near_plane.y - near_plane.x;
+        nearPlaneHeight = near_plane.w - near_plane.z;
+
+    };
+
 };
 
 #endif //RAYTRACER_CAMERA_H

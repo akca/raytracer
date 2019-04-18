@@ -52,6 +52,10 @@ namespace parser {
         // Functions
         void loadFromXml(const std::string &filepath);
     };
+
+
 } // namespace parser
+
+void parsePly(const char *ply_path, int material, std::vector<Triangle *> &faces);
 
 #endif

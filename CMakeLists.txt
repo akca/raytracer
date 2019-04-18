@@ -21,6 +21,7 @@ add_executable(
         src/main.cpp
         src/shade.cpp
         src/parser.cpp
+        src/parser_ply.cpp
         src/ppm.cpp
         src/jpeg.cpp
         src/utility.cpp
@@ -33,4 +34,8 @@ target_link_libraries(raytracer ${JPEG_LIBRARIES})
 file(COPY
         res
         res/477_hw2/textures
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+file(COPY
+        res/795_hw2/ply
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
