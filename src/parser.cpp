@@ -285,7 +285,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     element = root->FirstChildElement("VertexData");
     if (element) {
         stream << element->GetText() << std::endl;
-        Vector3D vertex;
+        Vertex vertex;
         while (!(stream >> vertex.e[0]).eof()) {
             stream >> vertex.e[1] >> vertex.e[2];
             vertex_data.push_back(vertex);
@@ -312,6 +312,9 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     while (element) {
 
         Mesh *new_mesh = new Mesh();
+        const char *const shading_mode = element->Attribute("shadingMode");
+
+        bool is_smooth_shading = shading_mode && strcmp(shading_mode, "smooth") == 0;
 
         child = element->FirstChildElement("Material");
         stream << child->GetText() << std::endl;
@@ -344,18 +347,19 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         }
 
         child = element->FirstChildElement("Faces");
-        stream << child->GetText() << std::endl;
-
         const char *const ply_file = child->Attribute("plyFile");
+        std::vector<ParserTriangle *> parser_triangles;
+
 
         if (ply_file != 0) {
 
-            parsePly(ply_file, new_mesh->material_id, new_mesh->faces);
-
+            parsePly(ply_file, new_mesh->material_id, new_mesh->faces, is_smooth_shading);
 
         } else {
 
             int v0_id, v1_id, v2_id;
+
+            stream << child->GetText() << std::endl;
 
             while (!(stream >> v0_id).eof()) {
                 stream >> v1_id >> v2_id;
@@ -368,9 +372,9 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
                     texCoord3 = {texCoordData[v2_id - 1].x, texCoordData[v2_id - 1].y};
                 }
 
-                Vector3D v1 = vertex_data[v0_id - 1];
-                Vector3D v2 = vertex_data[v1_id - 1];
-                Vector3D v3 = vertex_data[v2_id - 1];
+                Vertex &v1 = vertex_data[v0_id - 1];
+                Vertex &v2 = vertex_data[v1_id - 1];
+                Vertex &v3 = vertex_data[v2_id - 1];
 
                 // apply transformations if there exists
                 if (transformMatrix) {
@@ -382,12 +386,45 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
                 delete[] transformMatrix;
                 transformMatrix = nullptr;
 
-                auto *new_triangle = new Triangle(v1, v2, v3, new_mesh->material_id, new_mesh->texture_id,
-                                                  texCoord1, texCoord2, texCoord3);
+                if (is_smooth_shading) {
+                    auto *new_triangle = new ParserTriangle(v1, v2, v3);
+
+                    v1.addNormal(new_triangle->normal);
+                    v2.addNormal(new_triangle->normal);
+                    v3.addNormal(new_triangle->normal);
+
+                    parser_triangles.push_back(new_triangle);
+
+                } else {
+                    auto *new_triangle = new Triangle(v1, v2, v3, new_mesh->material_id, new_mesh->texture_id,
+                                                      texCoord1, texCoord2, texCoord3);
+                    new_mesh->faces.push_back(new_triangle);
+                }
+            }
+
+        }
+
+        if (is_smooth_shading) {
+            for (ParserTriangle *pt : parser_triangles) {
+
+                // in order to use vertex normals (for smooth shading), we need to normalize them.
+                (*pt).v1.normalizeNormal();
+                (*pt).v2.normalizeNormal();
+                (*pt).v3.normalizeNormal();
+
+                // create real triangles from ParserTriangle's
+                auto *new_triangle = new Triangle((*pt).v1, (*pt).v2, (*pt).v3, new_mesh->material_id,
+                                                  new_mesh->texture_id,
+                                                  Vec2f(0, 0), Vec2f(0, 0), Vec2f(0, 0));
+
+                new_triangle->is_smooth_shading = true;
+
+                new_triangle->vertex_normal_1 = (*pt).v1.normal;
+                new_triangle->vertex_normal_2 = (*pt).v2.normal;
+                new_triangle->vertex_normal_3 = (*pt).v3.normal;
 
                 new_mesh->faces.push_back(new_triangle);
             }
-
         }
 
         meshes.push_back(new_mesh);

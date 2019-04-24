@@ -15,6 +15,12 @@ public:
     Vector3D minPoint;
     Vector3D maxPoint;
 
+    Vector3D vertex_normal_1;
+    Vector3D vertex_normal_2;
+    Vector3D vertex_normal_3;
+
+    bool is_smooth_shading = false;
+
     // texcoords
     Vec2f texCoord1;
     Vec2f texCoord2;
@@ -94,7 +100,13 @@ public:
         if (t_new < tmax && t_new > tmin) {
 
             hit_record.t = t_new;
-            hit_record.normal = normal;
+
+            if (is_smooth_shading) {
+                hit_record.normal = vertex_normal_1 * (1 - u - v) + vertex_normal_2 * (u) + vertex_normal_3 * (v);
+            } else {
+                hit_record.normal = normal;
+            }
+
             hit_record.material_id = material_id;
             hit_record.texture_id = texture_id;
 

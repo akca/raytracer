@@ -7,6 +7,7 @@
 #include "triangle.h"
 #include "utility.h"
 #include "vector3d.h"
+#include "vertex.h"
 #include "bvh.h"
 #include "mesh.h"
 #include <string>
@@ -40,7 +41,7 @@ namespace parser {
         std::vector<PointLight> point_lights;
         std::vector<Material> materials;
         std::vector<Texture> textures;
-        std::vector<Vector3D> vertex_data;
+        std::vector<Vertex> vertex_data;
         std::vector<Vec2f> texCoordData;
         std::vector<Mesh *> meshes;
         std::vector<Object *> objects;
@@ -53,9 +54,21 @@ namespace parser {
         void loadFromXml(const std::string &filepath);
     };
 
+    /* this is used for calculating vertex normals */
+    struct ParserTriangle {
+        Vertex &v1;
+        Vertex &v2;
+        Vertex &v3;
+        Vector3D normal;
+
+        ParserTriangle(Vertex &a, Vertex &b, Vertex &c) : v1(a), v2(b), v3(c) {
+            normal = ((b - a) * (c - a)).normalize();
+        }
+    };
+
 
 } // namespace parser
 
-void parsePly(const char *ply_path, int material, std::vector<Triangle *> &faces);
+void parsePly(const char *ply_path, int material, std::vector<Triangle *> &faces, bool is_smooth_shading);
 
 #endif
