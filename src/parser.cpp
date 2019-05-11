@@ -359,11 +359,17 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
 
             int v0_id, v1_id, v2_id;
 
+            int vertexOffset = child->Attribute("vertexOffset") ? std::stoi(child->Attribute("vertexOffset")) : 0;
+
             stream << child->GetText() << std::endl;
 
             while (!(stream >> v0_id).eof()) {
                 stream >> v1_id >> v2_id;
                 Vec2f texCoord1, texCoord2, texCoord3;
+
+                v0_id += vertexOffset;
+                v1_id += vertexOffset;
+                v2_id += vertexOffset;
 
                 if (new_mesh->texture_id != -1) {
                     // texcoords
