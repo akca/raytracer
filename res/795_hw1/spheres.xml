@@ -79,14 +79,14 @@
     </VertexData>
 
     <Objects>
-        <Triangle id="1">
-            <Indices>1 2 3</Indices>
+        <Mesh id="1">
+            <Faces>1 2 3</Faces>
             <Material>4</Material>
-        </Triangle>
-        <Triangle id="2">
-            <Indices>3 2 4</Indices>
+        </Mesh>
+        <Mesh id="2">
+            <Faces>3 2 4</Faces>
             <Material>4</Material>
-        </Triangle>
+        </Mesh>
         <Sphere id="1">
             <Center>5</Center>
             <Radius>0.6</Radius>
