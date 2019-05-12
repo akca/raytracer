@@ -382,15 +382,6 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
                 Vertex &v2 = vertex_data[v1_id - 1];
                 Vertex &v3 = vertex_data[v2_id - 1];
 
-                // apply transformations if there exists
-                if (transformMatrix) {
-
-                    v1.applyTransform(transformMatrix, false);
-                    v2.applyTransform(transformMatrix, false);
-                    v3.applyTransform(transformMatrix, false);
-                }
-                delete[] transformMatrix;
-                transformMatrix = nullptr;
 
                 if (is_smooth_shading) {
                     auto *new_triangle = new ParserTriangle(v1, v2, v3);
@@ -402,7 +393,20 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
                     parser_triangles.push_back(new_triangle);
 
                 } else {
-                    auto *new_triangle = new Triangle(v1, v2, v3, new_mesh->material_id, new_mesh->texture_id,
+
+                    Vertex v1_c = v1;
+                    Vertex v2_c = v2;
+                    Vertex v3_c = v3;
+
+                    // apply transformations if there exists
+                    if (transformMatrix) {
+
+                        v1_c.applyTransform(transformMatrix, false);
+                        v2_c.applyTransform(transformMatrix, false);
+                        v3_c.applyTransform(transformMatrix, false);
+                    }
+
+                    auto *new_triangle = new Triangle(v1_c, v2_c, v3_c, new_mesh->material_id, new_mesh->texture_id,
                                                       texCoord1, texCoord2, texCoord3);
                     new_mesh->faces.push_back(new_triangle);
                 }
@@ -418,20 +422,35 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
                 (*pt).v2.normalizeNormal();
                 (*pt).v3.normalizeNormal();
 
+                Vertex v1_c = (*pt).v1;
+                Vertex v2_c = (*pt).v2;
+                Vertex v3_c = (*pt).v3;
+
+                // apply transformations if there exists
+                if (transformMatrix) {
+
+                    v1_c.applyTransform(transformMatrix, false);
+                    v2_c.applyTransform(transformMatrix, false);
+                    v3_c.applyTransform(transformMatrix, false);
+                }
+
                 // create real triangles from ParserTriangle's
-                auto *new_triangle = new Triangle((*pt).v1, (*pt).v2, (*pt).v3, new_mesh->material_id,
+                auto *new_triangle = new Triangle(v1_c, v2_c, v3_c, new_mesh->material_id,
                                                   new_mesh->texture_id,
                                                   Vec2f(0, 0), Vec2f(0, 0), Vec2f(0, 0));
 
                 new_triangle->is_smooth_shading = true;
 
-                new_triangle->vertex_normal_1 = (*pt).v1.normal;
-                new_triangle->vertex_normal_2 = (*pt).v2.normal;
-                new_triangle->vertex_normal_3 = (*pt).v3.normal;
+                new_triangle->vertex_normal_1 = v1_c.normal;
+                new_triangle->vertex_normal_2 = v2_c.normal;
+                new_triangle->vertex_normal_3 = v3_c.normal;
 
                 new_mesh->faces.push_back(new_triangle);
             }
         }
+
+        delete[] transformMatrix;
+        transformMatrix = nullptr;
 
         meshes.push_back(new_mesh);
 
