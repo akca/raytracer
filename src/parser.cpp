@@ -10,6 +10,8 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     std::stringstream stream;
     std::string transformations;
 
+    std::unordered_map<int, float *> meshInverseTransformation;
+
     auto res = file.LoadFile(filepath.c_str());
     if (res) {
         throw std::runtime_error("Error: The xml file cannot be loaded.");
@@ -312,6 +314,9 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     while (element) {
 
         Mesh *new_mesh = new Mesh();
+
+        int meshId = std::stoi(element->Attribute("id")) - 1;
+
         const char *const shading_mode = element->Attribute("shadingMode");
 
         bool is_smooth_shading = shading_mode && strcmp(shading_mode, "smooth") == 0;
@@ -342,6 +347,9 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
             transformMatrix = createTransformMatrix(
                     t_translation, t_rotation, t_scaling, false, transformations);
 
+            meshInverseTransformation[meshId] = createTransformMatrix(
+                    t_translation, t_rotation, t_scaling, true, transformations);
+
         } else {
             transformations = "";
         }
@@ -353,7 +361,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
 
         if (ply_file != 0) {
 
-            parsePly(ply_file, new_mesh->material_id, new_mesh->faces, is_smooth_shading);
+            parsePly(ply_file, new_mesh->material_id, new_mesh->faces, transformMatrix, is_smooth_shading);
 
         } else {
 
@@ -469,22 +477,33 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
     element = element->FirstChildElement("MeshInstance");
 
     while (element) {
-        int material_id;
-        int texture_id = 0;
+
+        Mesh *new_mesh = new Mesh();
+
         int baseMeshId = std::stoi(element->Attribute("baseMeshId")) - 1;
 
         child = element->FirstChildElement("Material");
         stream << child->GetText() << std::endl;
-        stream >> material_id;
+        stream >> new_mesh->material_id;
+
+        // convert to zero index
+        new_mesh->material_id--;
 
         child = element->FirstChildElement("Texture");
         if (child) {
             stream << child->GetText() << std::endl;
-            stream >> texture_id;
-            textures[texture_id - 1].loadImage();
+            stream >> new_mesh->texture_id;
+
+            // convert to zero index
+            new_mesh->texture_id--;
+
+            textures[new_mesh->texture_id].loadImage();
         }
 
         child = element->FirstChildElement("Transformations");
+
+        bool resetTransform = element->Attribute("resetTransform")
+                              && strcmp(element->Attribute("resetTransform"), "true") == 0;
 
         float *transformMatrix = nullptr;
 
@@ -492,35 +511,45 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
             transformations = child->GetText();
             transformMatrix = createTransformMatrix(
                     t_translation, t_rotation, t_scaling, false, transformations);
+            if (resetTransform && meshInverseTransformation[baseMeshId])
+                mmul44(transformMatrix, meshInverseTransformation[baseMeshId], transformMatrix);
+
         } else {
             transformations = "";
+            if (resetTransform)
+                transformMatrix = meshInverseTransformation[baseMeshId];
         }
+
 
         for (auto &face : meshes[baseMeshId]->faces) {
 
-            //TODO instance calculations are wrong!
+            Vector3D v1((*face).v1);
+            Vector3D edge1((*face).edge1);
+            Vector3D edge2((*face).edge2);
 
-            Vector3D v1 = (*face).v1;
-            Vector3D edge1 = (*face).edge1;
-            Vector3D edge2 = (*face).edge2;
+            edge1 = edge1 + v1;
+            edge2 = edge2 + v1;
 
             if (transformMatrix) {
-                edge1 = edge1 + v1;
-                edge2 = edge2 + v1;
                 v1.applyTransform(transformMatrix, false);
                 edge1.applyTransform(transformMatrix, false);
                 edge2.applyTransform(transformMatrix, false);
-                edge1 = edge1 - v1;
-                edge2 = edge2 - v1;
             }
-            auto *new_triangle = new Triangle(v1, edge1, edge2, material_id - 1, texture_id - 1,
+
+            auto *new_triangle = new Triangle(v1, edge1, edge2, new_mesh->material_id, new_mesh->texture_id,
                                               (*face).texCoord1, (*face).texCoord2, (*face).texCoord3);
 
-            objects.push_back(new_triangle);
+            new_mesh->faces.push_back(new_triangle);
         }
+
+        // construct bvh for this mesh
+        BVH *mesh_bvh = new BVH((Object **) new_mesh->faces.data(), new_mesh->faces.size());
+        objects.push_back(mesh_bvh);
+
         if (transformMatrix) {
             delete[] transformMatrix;
         }
+
         element = element->NextSiblingElement("MeshInstance");
     }
 

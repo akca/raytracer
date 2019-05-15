@@ -69,6 +69,7 @@ namespace parser {
 
 } // namespace parser
 
-void parsePly(const char *ply_path, int material, std::vector<Triangle *> &faces, bool is_smooth_shading);
+void parsePly(const char *ply_path, int material, std::vector<Triangle *> &faces, float *transformMatrix,
+              bool is_smooth_shading);
 
 #endif

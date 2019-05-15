@@ -8,7 +8,8 @@
 using namespace tinyply;
 using namespace parser;
 
-void parsePly(const char *ply_path, int material, std::vector<Triangle *> &faces_vector, bool is_smooth_shading) {
+void parsePly(const char *ply_path, int material, std::vector<Triangle *> &faces_vector, float *transformMatrix,
+              bool is_smooth_shading) {
 
     std::ifstream ss(ply_path, std::ios::binary);
     if (ss.fail()) throw std::runtime_error("failed to open ply file");
@@ -84,7 +85,20 @@ void parsePly(const char *ply_path, int material, std::vector<Triangle *> &faces
                 parser_triangles.push_back(new_triangle);
 
             } else {
-                Triangle *new_triangle = new Triangle(v1, v2, v3, material);
+
+                Vertex v1_c = v1;
+                Vertex v2_c = v2;
+                Vertex v3_c = v3;
+
+                // apply transformations if there exists
+                if (transformMatrix) {
+
+                    v1_c.applyTransform(transformMatrix, false);
+                    v2_c.applyTransform(transformMatrix, false);
+                    v3_c.applyTransform(transformMatrix, false);
+                }
+
+                Triangle *new_triangle = new Triangle(v1_c, v2_c, v3_c, material);
                 faces_vector.push_back(new_triangle);
             }
         }
@@ -117,8 +131,23 @@ void parsePly(const char *ply_path, int material, std::vector<Triangle *> &faces
                 parser_triangles.push_back(new_triangle_1);
                 parser_triangles.push_back(new_triangle_2);
             } else {
-                Triangle *new_triangle_1 = new Triangle(v1, v2, v3, material);
-                Triangle *new_triangle_2 = new Triangle(v3, v4, v1, material);
+
+                Vertex v1_c = v1;
+                Vertex v2_c = v2;
+                Vertex v3_c = v3;
+                Vertex v4_c = v4;
+
+                // apply transformations if there exists
+                if (transformMatrix) {
+
+                    v1_c.applyTransform(transformMatrix, false);
+                    v2_c.applyTransform(transformMatrix, false);
+                    v3_c.applyTransform(transformMatrix, false);
+                    v4_c.applyTransform(transformMatrix, false);
+                }
+
+                Triangle *new_triangle_1 = new Triangle(v1_c, v2_c, v3_c, material);
+                Triangle *new_triangle_2 = new Triangle(v3_c, v4_c, v1_c, material);
 
                 faces_vector.push_back(new_triangle_1);
                 faces_vector.push_back(new_triangle_2);
@@ -138,8 +167,20 @@ void parsePly(const char *ply_path, int material, std::vector<Triangle *> &faces
             (*pt).v2.normalizeNormal();
             (*pt).v3.normalizeNormal();
 
+            Vertex v1_c = (*pt).v1;
+            Vertex v2_c = (*pt).v2;
+            Vertex v3_c = (*pt).v3;
+
+            // apply transformations if there exists
+            if (transformMatrix) {
+
+                v1_c.applyTransform(transformMatrix, false);
+                v2_c.applyTransform(transformMatrix, false);
+                v3_c.applyTransform(transformMatrix, false);
+            }
+
             // create real triangles from ParserTriangle's
-            auto *new_triangle = new Triangle((*pt).v1, (*pt).v2, (*pt).v3, material);
+            auto *new_triangle = new Triangle(v1_c, v2_c, v3_c, material);
 
             new_triangle->is_smooth_shading = true;
             new_triangle->vertex_normal_1 = (*pt).v1.normal;
