@@ -60,8 +60,8 @@ public:
 
         // if triangle is parallel to one of the planes,
         for (int i = 0; i < 3; i++) {
-            if (std::fabs(maxPoint.e[i] - bbox_min_point.e[i]) < 0.00001) {
-                bbox_min_point.e[i] -= 0.00001;
+            if (std::fabs(maxPoint.e[i] - bbox_min_point.e[i]) < 0.0001) {
+                bbox_min_point.e[i] -= 0.0001;
             }
         }
 
