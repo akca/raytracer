@@ -45,4 +45,7 @@ float *createTransformMatrix(std::vector<Vec3f> &t_translation,
                              std::vector<Vec3f> &t_scaling, bool inverse,
                              const std::string &transformations);
 
+float maxScaleMultiplier(std::vector<Vec3f> &t_scaling,
+                         const std::string &transformations);
+
 #endif

@@ -610,6 +610,8 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
                             new_sph->invTransformMatrix[y + 4 * x];
                 }
             }
+
+            new_sph->biggestScaleMultiplier = maxScaleMultiplier(t_scaling, transformations);
         }
 
         objects.push_back(new_sph);

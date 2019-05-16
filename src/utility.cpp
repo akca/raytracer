@@ -188,3 +188,45 @@ float *createTransformMatrix(std::vector<Vec3f> &t_translation,
     */
     return transformMatrix;
 }
+
+/**
+ * Calculate max scale multiplier.
+ *
+ * @param t_scaling all scale transformations
+ * @param transformations transformation string
+ * @return maximum real cumulative scale multiplier of 3 axis.
+ * E.g. if scaled with (1.2, 3.5, 5.0), return 5.0.
+ */
+float maxScaleMultiplier(std::vector<Vec3f> &t_scaling,
+                         const std::string &transformations) {
+
+    if (transformations.empty())
+        return 0.0f;
+
+    // cumulative scale coefficients for each axis
+    float scaleCoefficient[3]{1.0f, 1.0f, 1.0f};
+
+    int tid;
+    char ttype;
+
+    std::string temp;
+    std::istringstream stream(transformations);
+
+    while (stream >> temp) {
+        std::istringstream stream2(temp);
+
+        stream2 >> ttype;
+        stream2 >> tid;
+
+        // scale
+        if (ttype == 's') {
+
+            scaleCoefficient[0] *= t_scaling[tid].x;
+            scaleCoefficient[1] *= t_scaling[tid].y;
+            scaleCoefficient[2] *= t_scaling[tid].z;
+        }
+
+    }
+
+    return std::max(scaleCoefficient[0], std::max(scaleCoefficient[1], scaleCoefficient[2]));
+}

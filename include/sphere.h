@@ -9,6 +9,12 @@ class Sphere : public Object {
 public:
     Vector3D center; // center of the sphere
     float r;
+    /*
+     * maximum scale multiplier among 3-axis. used for bounding box calculation.
+     * not so efficient. gives smallest bounding "cube".
+     * TODO: calculate smallest bounding box
+     */
+    float biggestScaleMultiplier;
     float r2;
     float *transformMatrix = nullptr;
     float *invTransformMatrix = nullptr;
@@ -21,7 +27,15 @@ public:
     }
 
     bool bounding_box(float t0, float t1, BBox &box) override {
-        box = BBox(center - Vector3D(r, r, r), center + Vector3D(r, r, r));
+        Vector3D translatedCenter = center;
+
+        if (transformMatrix)
+            translatedCenter.applyTransform(transformMatrix, false);
+
+        float scaledRadius = transformMatrix ? (r * biggestScaleMultiplier) : r;
+
+        box = BBox(translatedCenter - Vector3D(scaledRadius, scaledRadius, scaledRadius),
+                   translatedCenter + Vector3D(scaledRadius, scaledRadius, scaledRadius));
         return true;
     }
 
