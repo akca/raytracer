@@ -22,7 +22,7 @@ class Object {
 public:
     virtual ~Object() {}
 
-    virtual bool intersects(const Ray &ray, float tmin, float tmax, HitRecord& hit_record, bool backfaceCulling) = 0;
+    virtual bool intersects(Ray &ray, float tmin, float tmax, HitRecord &hit_record, bool backfaceCulling) = 0;
 
     virtual bool bounding_box(float t0, float t1, BBox& box) = 0;
 

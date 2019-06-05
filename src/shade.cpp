@@ -112,7 +112,9 @@ shade(parser::Scene &scene, Ray &ray, bool backfaceCulling, int recursionDepth) 
             bool underShadow = false;
 
             // shadow ray
-            if (scene.root_bvh->intersects(Ray(shadowRayOrigin, wi), 0, stmin, hit_record_shadow, false)) {
+            Ray shadow_ray(shadowRayOrigin, wi);
+
+            if (scene.root_bvh->intersects(shadow_ray, 0, stmin, hit_record_shadow, false)) {
                 underShadow = true;
             }
 

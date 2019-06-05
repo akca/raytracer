@@ -57,22 +57,19 @@ public:
         return true;
     }
 
-    bool intersects(const Ray &ray, float tmin, float tmax, HitRecord &hit_record, bool backfaceCulling) override {
-
-        Vector3D newOrigin = ray.origin;
-        Vector3D newDirection = ray.direction;
+    bool intersects(Ray &ray, float tmin, float tmax, HitRecord &hit_record, bool backfaceCulling) override {
 
         if (invTransformMatrix) {
-            newDirection.applyTransform(invTransformMatrix, true);
-            newDirection.normalize();
-            newOrigin.applyTransform(invTransformMatrix, false);
+            ray.direction.applyTransform(invTransformMatrix, true);
+            ray.direction.normalize();
+            ray.origin.applyTransform(invTransformMatrix, false);
         }
 
         Vector3D new_center = center_point(ray.time);
 
-        Vector3D L = newOrigin - new_center;
+        Vector3D L = ray.origin - new_center;
 
-        float b = 2 * newDirection.dotProduct(L);
+        float b = 2 * ray.direction.dotProduct(L);
         float c = L.dotProduct(L) - r2;
 
         float t0, t1; // these will become roots
@@ -95,7 +92,7 @@ public:
             return false;
         else {
             hit_record.t = t0;
-            hit_record.intersection_point = newOrigin + newDirection * hit_record.t;
+            hit_record.intersection_point = ray.origin + ray.direction * hit_record.t;
             hit_record.normal = (hit_record.intersection_point - new_center).normalize();
             hit_record.material_id = material_id;
             hit_record.texture_id = texture_id;

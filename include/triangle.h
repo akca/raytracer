@@ -70,7 +70,7 @@ public:
         return true;
     }
 
-    bool intersects(const Ray &ray, float tmin, float tmax, HitRecord &hit_record, bool backfaceCulling) override {
+    bool intersects(Ray &ray, float tmin, float tmax, HitRecord &hit_record, bool backfaceCulling) override {
 
         Vector3D pVector = ray.direction * edge2;
         float det = edge1.dotProduct(pVector);

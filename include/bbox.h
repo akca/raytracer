@@ -23,7 +23,7 @@ public:
 
     Vector3D pp[2];
 
-    inline bool rayIntersect(const Ray &r, float tmin, float tmax) const {
+    inline bool rayIntersect(Ray &r, float tmin, float tmax) const {
         for (int a = 0; a < 3; a++) {
             float invD = 1.0f / r.direction[a];
             float t0 = (min()[a] - r.origin[a]) * invD;

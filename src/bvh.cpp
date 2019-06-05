@@ -5,7 +5,7 @@ bool BVH::bounding_box(float t0, float t1, BBox &box) {
     return true;
 }
 
-bool BVH::intersects(const Ray &ray, float tmin, float tmax, HitRecord &hit_record, bool backfaceCulling) {
+bool BVH::intersects(Ray &ray, float tmin, float tmax, HitRecord &hit_record, bool backfaceCulling) {
 
     if (!bbox.rayIntersect(ray, tmin, tmax)) {
         return false;

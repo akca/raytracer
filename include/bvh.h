@@ -21,7 +21,7 @@ public:
         right = nullptr;
     }
 
-    bool intersects(const Ray &ray, float tmin, float tmax, HitRecord &hit_record, bool backfaceCulling) override;
+    bool intersects(Ray &ray, float tmin, float tmax, HitRecord &hit_record, bool backfaceCulling) override;
 
     bool bounding_box(float t0, float t1, BBox &box) override;
 
