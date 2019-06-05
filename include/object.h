@@ -28,6 +28,8 @@ public:
 
     int material_id = -1;
     int texture_id = -1;
+
+    Vector3D motion_blur;
 };
 
 #endif

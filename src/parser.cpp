@@ -339,6 +339,12 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
             textures[new_mesh->texture_id].loadImage();
         }
 
+        child = element->FirstChildElement("MotionBlur");
+        if (child) {
+            stream << child->GetText() << std::endl;
+            stream >> new_mesh->motion_blur.e[0] >> new_mesh->motion_blur.e[1] >> new_mesh->motion_blur.e[2];
+        }
+
         child = element->FirstChildElement("Transformations");
 
         float *transformMatrix = nullptr;
@@ -500,6 +506,12 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
             textures[new_mesh->texture_id].loadImage();
         }
 
+        child = element->FirstChildElement("MotionBlur");
+        if (child) {
+            stream << child->GetText() << std::endl;
+            stream >> new_mesh->motion_blur.e[0] >> new_mesh->motion_blur.e[1] >> new_mesh->motion_blur.e[2];
+        }
+
         child = element->FirstChildElement("Transformations");
 
         bool resetTransform = element->Attribute("resetTransform")
@@ -597,6 +609,12 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
         }
 
         auto *new_sph = new Sphere(vertex_data[center_vertex_id - 1], radius, material_id, texture_id);
+
+        child = element->FirstChildElement("MotionBlur");
+        if (child) {
+            stream << child->GetText() << std::endl;
+            stream >> new_sph->motion_blur.e[0] >> new_sph->motion_blur.e[1] >> new_sph->motion_blur.e[2];
+        }
 
         if (!transformations.empty()) {
             new_sph->transformMatrix = createTransformMatrix(

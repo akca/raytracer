@@ -123,6 +123,10 @@ public:
         e[2] = newZ;
     }
 
+    inline bool isZero() {
+        return e[0] == 0 && e[1] == 0 && e[2] == 0;
+    }
+
 };
 
 #endif

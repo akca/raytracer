@@ -26,6 +26,13 @@ public:
         texture_id = t;
     }
 
+    inline Vector3D center_point(float time) {
+        if (motion_blur.isZero())
+            return center;
+        else
+            return center + motion_blur * time;
+    }
+
     bool bounding_box(float t0, float t1, BBox &box) override {
         Vector3D translatedCenter = center;
 
@@ -36,6 +43,17 @@ public:
 
         box = BBox(translatedCenter - Vector3D(scaledRadius, scaledRadius, scaledRadius),
                    translatedCenter + Vector3D(scaledRadius, scaledRadius, scaledRadius));
+
+        if (!motion_blur.isZero()) {
+
+            Vector3D motionBlurCenter = center + motion_blur;
+
+            BBox box2 = BBox(motionBlurCenter - Vector3D(scaledRadius, scaledRadius, scaledRadius),
+                             motionBlurCenter + Vector3D(scaledRadius, scaledRadius, scaledRadius));
+
+            box = surround(box, box2);
+        }
+
         return true;
     }
 
@@ -50,7 +68,9 @@ public:
             newOrigin.applyTransform(invTransformMatrix, false);
         }
 
-        Vector3D L = newOrigin - center;
+        Vector3D new_center = center_point(ray.time);
+
+        Vector3D L = newOrigin - new_center;
 
         float b = 2 * newDirection.dotProduct(L);
         float c = L.dotProduct(L) - r2;
@@ -76,12 +96,12 @@ public:
         else {
             hit_record.t = t0;
             hit_record.intersection_point = newOrigin + newDirection * hit_record.t;
-            hit_record.normal = (hit_record.intersection_point - center).normalize();
+            hit_record.normal = (hit_record.intersection_point - new_center).normalize();
             hit_record.material_id = material_id;
             hit_record.texture_id = texture_id;
 
             if (texture_id != -1) {
-                Vector3D relative = hit_record.intersection_point - center;
+                Vector3D relative = hit_record.intersection_point - new_center;
                 hit_record.texture_coords.x = static_cast<float>(-atan2f(relative.z(), relative.x())
                                                                  / (2 * M_PI) + 0.5f); // u
                 hit_record.texture_coords.y = static_cast<float>(acosf(relative.y()

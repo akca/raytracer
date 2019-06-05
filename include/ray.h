@@ -15,6 +15,7 @@ public:
 
     Vector3D origin;
     Vector3D direction;
+    float time = drand48(); // TODO: check performance
 };
 
 #endif //RAYTRACER_RAY_H
