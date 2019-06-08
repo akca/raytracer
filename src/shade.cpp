@@ -112,7 +112,7 @@ shade(parser::Scene &scene, Ray &ray, bool backfaceCulling, int recursionDepth) 
             bool underShadow = false;
 
             // shadow ray
-            Ray shadow_ray(shadowRayOrigin, wi);
+            Ray shadow_ray(shadowRayOrigin, wi, ray.time);
 
             if (scene.root_bvh->intersects(shadow_ray, 0, stmin, hit_record_shadow, false)) {
                 underShadow = true;
@@ -185,7 +185,7 @@ shade(parser::Scene &scene, Ray &ray, bool backfaceCulling, int recursionDepth) 
             const Vector3D ray_origin_with_epsilon =
                     hit_record.intersection_point + reflection_direction * scene.shadow_ray_epsilon;
 
-            Ray reflection_ray = Ray(ray_origin_with_epsilon, reflection_direction);
+            Ray reflection_ray = Ray(ray_origin_with_epsilon, reflection_direction, ray.time);
 
             pixelColor = pixelColor + kMirror.multiply(shade(scene, reflection_ray,
                                                              backfaceCulling,
@@ -213,7 +213,7 @@ shade(parser::Scene &scene, Ray &ray, bool backfaceCulling, int recursionDepth) 
                 Vector3D refractionRayOrigin = is_outside ? hit_record.intersection_point - bias :
                                                hit_record.intersection_point + bias;
 
-                Ray refraction_ray = Ray(refractionRayOrigin, refractionDirection);
+                Ray refraction_ray = Ray(refractionRayOrigin, refractionDirection, ray.time);
 
                 refractionColor = shade(scene, refraction_ray, !is_outside, recursionDepth + 1);
             }
@@ -222,7 +222,7 @@ shade(parser::Scene &scene, Ray &ray, bool backfaceCulling, int recursionDepth) 
             Vector3D reflectionRayOrigin = is_outside ? hit_record.intersection_point + bias :
                                            hit_record.intersection_point - bias;
 
-            Ray reflection_ray = Ray(reflectionRayOrigin, reflectionDirection);
+            Ray reflection_ray = Ray(reflectionRayOrigin, reflectionDirection, ray.time);
 
             reflectionColor = shade(scene, reflection_ray, false, recursionDepth + 1);
 
