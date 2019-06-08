@@ -33,7 +33,7 @@ target_link_libraries(raytracer ${JPEG_LIBRARIES})
 
 file(COPY
         res
-        res/477_hw2/textures
+        textures
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 file(COPY
