@@ -26,9 +26,10 @@ public:
 
     virtual bool bounding_box(float t0, float t1, BBox& box) = 0;
 
+    // TODO: move common parameters to mesh.
+    //  storing material_id etc. in all triangles makes no sense!
     int material_id = -1;
     int texture_id = -1;
-
     Vector3D motion_blur;
 };
 

@@ -8,7 +8,8 @@
 using namespace tinyply;
 using namespace parser;
 
-void parsePly(const char *ply_path, int material, std::vector<Triangle *> &faces_vector, float *transformMatrix,
+void parsePly(const char *ply_path, int material, Vector3D &motion_blur, std::vector<Triangle *> &faces_vector,
+              float *transformMatrix,
               bool is_smooth_shading) {
 
     std::ifstream ss(ply_path, std::ios::binary);
@@ -99,6 +100,7 @@ void parsePly(const char *ply_path, int material, std::vector<Triangle *> &faces
                 }
 
                 Triangle *new_triangle = new Triangle(v1_c, v2_c, v3_c, material);
+                new_triangle->motion_blur = motion_blur;
                 faces_vector.push_back(new_triangle);
             }
         }
@@ -149,6 +151,9 @@ void parsePly(const char *ply_path, int material, std::vector<Triangle *> &faces
                 Triangle *new_triangle_1 = new Triangle(v1_c, v2_c, v3_c, material);
                 Triangle *new_triangle_2 = new Triangle(v3_c, v4_c, v1_c, material);
 
+                new_triangle_1->motion_blur = motion_blur;
+                new_triangle_2->motion_blur = motion_blur;
+
                 faces_vector.push_back(new_triangle_1);
                 faces_vector.push_back(new_triangle_2);
             }
@@ -183,6 +188,7 @@ void parsePly(const char *ply_path, int material, std::vector<Triangle *> &faces
             auto *new_triangle = new Triangle(v1_c, v2_c, v3_c, material);
 
             new_triangle->is_smooth_shading = true;
+            new_triangle->motion_blur = motion_blur;
             new_triangle->vertex_normal_1 = (*pt).v1.normal;
             new_triangle->vertex_normal_2 = (*pt).v2.normal;
             new_triangle->vertex_normal_3 = (*pt).v3.normal;

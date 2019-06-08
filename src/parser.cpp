@@ -367,7 +367,8 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
 
         if (ply_file != 0) {
 
-            parsePly(ply_file, new_mesh->material_id, new_mesh->faces, transformMatrix, is_smooth_shading);
+            parsePly(ply_file, new_mesh->material_id, new_mesh->motion_blur, new_mesh->faces,
+                     transformMatrix, is_smooth_shading);
 
         } else {
 
@@ -422,6 +423,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
 
                     auto *new_triangle = new Triangle(v1_c, v2_c, v3_c, new_mesh->material_id, new_mesh->texture_id,
                                                       texCoord1, texCoord2, texCoord3);
+                    new_triangle->motion_blur = new_mesh->motion_blur;
                     new_mesh->faces.push_back(new_triangle);
                 }
             }
@@ -454,6 +456,7 @@ void parser::Scene::loadFromXml(const std::string &filepath) {
                                                   Vec2f(0, 0), Vec2f(0, 0), Vec2f(0, 0));
 
                 new_triangle->is_smooth_shading = true;
+                new_triangle->motion_blur = new_mesh->motion_blur;
 
                 new_triangle->vertex_normal_1 = v1_c.normal;
                 new_triangle->vertex_normal_2 = v2_c.normal;

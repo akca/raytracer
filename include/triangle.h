@@ -20,6 +20,7 @@ public:
     Vector3D vertex_normal_3;
 
     bool is_smooth_shading = false;
+    bool bounding_box_ready = false;
 
     // texcoords
     Vec2f texCoord1;
@@ -54,23 +55,46 @@ public:
 
     }
 
-    bool bounding_box(float t0, float t1, BBox &box) override {
+    void init_bounding_box() {
 
-        Vector3D bbox_min_point = minPoint;
+        if (bounding_box_ready)
+            return;
 
-        // if triangle is parallel to one of the planes,
+        // extend bounding box by motion_blur vector
         for (int i = 0; i < 3; i++) {
-            if (std::fabs(maxPoint.e[i] - bbox_min_point.e[i]) < 0.0001) {
-                bbox_min_point.e[i] -= 0.0001;
+            if (motion_blur.e[i] < -0.001) {
+                minPoint.e[i] += motion_blur.e[i];
+            } else if (motion_blur.e[i] > 0.001) {
+                maxPoint.e[i] += motion_blur.e[i];
             }
         }
 
-        box = BBox(bbox_min_point, maxPoint);
+        // if triangle is parallel to one of the planes,
+        for (int i = 0; i < 3; i++) {
+            if (std::fabs(maxPoint.e[i] - minPoint.e[i]) < 0.0001) {
+                minPoint.e[i] -= 0.0001;
+            }
+        }
+
+        bounding_box_ready = true;
+    }
+
+    bool bounding_box(float t0, float t1, BBox &box) override {
+
+        init_bounding_box();
+
+        box = BBox(minPoint, maxPoint);
 
         return true;
     }
 
     bool intersects(Ray &ray, float tmin, float tmax, HitRecord &hit_record, bool backfaceCulling) override {
+
+        Vector3D ray_origin = ray.origin;
+
+        if (!motion_blur.isZero()) {
+            ray_origin = ray_origin - (motion_blur * ray.time);
+        }
 
         Vector3D pVector = ray.direction * edge2;
         float det = edge1.dotProduct(pVector);
@@ -83,7 +107,7 @@ public:
         float inverseDet = 1 / det;
         float u, v;
 
-        Vector3D tVector = ray.origin - v1;
+        Vector3D tVector = ray_origin - v1;
         u = inverseDet * tVector.dotProduct(pVector);
         if (u < -1e-7 || u > 1.00001) {
             return false;
